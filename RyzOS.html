@@ -133,13 +133,13 @@
       box-shadow:0 12px 48px rgba(0,0,0,.5);padding:20px;color:var(--text-primary);
     }
     #start-menu h3{font-size:14px;font-weight:400;color:var(--text-muted);margin-bottom:12px;}
-    #start-menu-search{
+    #start-search{
       width:100%;padding:10px 14px;border-radius:10px;
       border:1px solid var(--border);background:var(--bg-secondary);
       color:var(--text-primary);font-size:14px;outline:none;margin-bottom:16px;
     }
-    #start-menu-search::placeholder{color:var(--text-muted);}
-    #start-menu-grid{
+    #start-search::placeholder{color:var(--text-muted);}
+    #start-grid{
       display:grid;grid-template-columns:repeat(4,1fr);gap:8px;
       overflow-y:auto;max-height:340px;
     }
@@ -448,6 +448,33 @@
     .about-ver{font-size:13px;color:var(--text-muted);margin-bottom:20px;}
     .about-app p{font-size:14px;line-height:1.6;color:var(--text-secondary);max-width:360px;margin:0 auto;}
 
+    /* ===== NOTIFICATION BADGE ===== */
+    .notif-badge{
+      position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;
+      border-radius:9px;background:var(--danger);color:#fff;font-size:10px;
+      font-weight:700;display:flex;align-items:center;justify-content:center;
+      padding:0 4px;pointer-events:none;animation:notifPop .2s ease-out;
+    }
+    @keyframes notifPop{from{transform:scale(0)}to{transform:scale(1)}}
+    .taskbar-app{position:relative;}
+    .desktop-icon{position:relative;}
+    .notif-toast{
+      position:fixed;top:16px;right:16px;z-index:9000;
+      background:var(--bg-primary);backdrop-filter:blur(16px);
+      border:1px solid var(--border);border-radius:12px;
+      padding:12px 18px;color:var(--text-primary);font-size:13px;
+      box-shadow:0 8px 32px rgba(0,0,0,.5);animation:toastIn .3s ease-out;
+      max-width:320px;cursor:pointer;
+    }
+    @keyframes toastIn{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:none}}
+    .notif-toast .nt-title{font-weight:600;margin-bottom:2px;}
+    .notif-toast .nt-body{color:var(--text-secondary);font-size:12px;}
+    .chat-help{
+      background:rgba(0,0,0,0.2);border-radius:8px;padding:10px 14px;margin:8px 0;
+      font-size:12px;line-height:1.8;color:var(--text-secondary);
+    }
+    .chat-help b{color:var(--text-primary);}
+
     /* ===== SCROLLBAR ===== */
     ::-webkit-scrollbar{width:6px;height:6px;}
     ::-webkit-scrollbar-track{background:transparent;}
@@ -548,6 +575,8 @@ const RyzOS = (() => {
   let chatChannel = 'general';        // current channel or "dm:<user>"
   const chatMessages = {};            // channel -> [msgs]
   let onlineUsers = [];
+  const chatUnread = {};              // channel -> unread count
+  const joinedChannels = new Set(['general','random','games']);
 
   // Per-app state
   let notesContent = '';
@@ -846,10 +875,27 @@ const RyzOS = (() => {
       if (m.type === 'online-users') { onlineUsers = m.users || []; chatUI_updateUsers(); return; }
       if (m.type === 'user-joined')  { pushChatMsg('general', { sys:true, text: m.username + ' joined' }); chatUI_render(); return; }
       if (m.type === 'user-left')    { pushChatMsg('general', { sys:true, text: m.username + ' left' }); chatUI_render(); return; }
-      if (m.type === 'chat')         { pushChatMsg(m.channel||'general', { user:m.user, text:m.text, time:m.time, self: m.user===user }); chatUI_render(); return; }
-      if (m.type === 'dm')           {
+      if (m.type === 'history')      {
+        const ch = m.channel || 'general';
+        if (!chatMessages[ch]) chatMessages[ch] = [];
+        const existing = chatMessages[ch].length;
+        (m.messages || []).forEach(msg => {
+          chatMessages[ch].push({ user:msg.user, text:msg.text, time:msg.time, self:msg.user===user, sys:msg.sys });
+        });
+        chatUI_render();
+        return;
+      }
+      if (m.type === 'chat') {
+        const ch = m.channel||'general';
+        pushChatMsg(ch, { user:m.user, text:m.text, time:m.time, self: m.user===user });
+        if (m.user !== user) notifyMsg(ch, m.user, m.text);
+        chatUI_render();
+        return;
+      }
+      if (m.type === 'dm') {
         const ch = 'dm:' + (m.from === user ? m.to : m.from);
         pushChatMsg(ch, { user:m.from, text:m.text, time:m.time, self: m.from===user });
+        if (m.from !== user) notifyMsg(ch, m.from, m.text);
         chatUI_render();
         return;
       }
@@ -862,9 +908,88 @@ const RyzOS = (() => {
     if (chatMessages[ch].length > 500) chatMessages[ch].shift();
   }
 
+  // ---------- NOTIFICATIONS ----------
+  function notifyMsg(channel, fromUser, text) {
+    // Increment unread if not viewing that channel
+    if (channel !== chatChannel || !wins.messages || wins.messages.style.display === 'none') {
+      chatUnread[channel] = (chatUnread[channel] || 0) + 1;
+      updateNotifBadges();
+      showToast(fromUser, text.length > 60 ? text.slice(0, 60) + '...' : text, () => {
+        openApp('messages');
+        switchChannel(channel);
+      });
+    }
+  }
+  function updateNotifBadges() {
+    // Taskbar badge
+    const tbBtn = $('tb-messages');
+    if (tbBtn) {
+      let old = tbBtn.querySelector('.notif-badge');
+      if (old) old.remove();
+      const total = Object.values(chatUnread).reduce((a, b) => a + b, 0);
+      if (total > 0) {
+        const badge = document.createElement('span');
+        badge.className = 'notif-badge';
+        badge.textContent = total > 99 ? '99+' : total;
+        tbBtn.appendChild(badge);
+      }
+    }
+    // Sidebar channel badges
+    document.querySelectorAll('.chat-ch').forEach(el => {
+      let old = el.querySelector('.notif-badge');
+      if (old) old.remove();
+      const ch = el.dataset.ch;
+      if (chatUnread[ch] && chatUnread[ch] > 0) {
+        const badge = document.createElement('span');
+        badge.className = 'notif-badge';
+        badge.style.position = 'static';
+        badge.style.marginLeft = 'auto';
+        badge.textContent = chatUnread[ch];
+        el.appendChild(badge);
+      }
+    });
+    // DM badges
+    document.querySelectorAll('.chat-dm').forEach(el => {
+      let old = el.querySelector('.notif-badge');
+      if (old) old.remove();
+      const uname = el.textContent.trim();
+      const ch = 'dm:' + uname;
+      if (chatUnread[ch] && chatUnread[ch] > 0) {
+        const badge = document.createElement('span');
+        badge.className = 'notif-badge';
+        badge.style.position = 'static';
+        badge.style.marginLeft = 'auto';
+        badge.textContent = chatUnread[ch];
+        el.appendChild(badge);
+      }
+    });
+  }
+  let toastTimer = null;
+  function showToast(title, body, onclick) {
+    let t = document.querySelector('.notif-toast');
+    if (t) t.remove();
+    t = document.createElement('div');
+    t.className = 'notif-toast';
+    t.innerHTML = `<div class="nt-title">${esc(title)}</div><div class="nt-body">${esc(body)}</div>`;
+    t.onclick = () => { t.remove(); if (onclick) onclick(); };
+    document.body.appendChild(t);
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { if (t.parentNode) t.remove(); }, 4000);
+  }
+
   function sendChat() {
     const inp = $('chat-input'); if (!inp) return;
-    const text = inp.value.trim(); if (!text || !ws || !wsAuthed) return;
+    const text = inp.value.trim(); if (!text) return;
+    inp.value = '';
+    inp.focus();
+
+    // Handle commands
+    if (text.startsWith('/')) {
+      handleChatCommand(text);
+      return;
+    }
+
+    if (!ws || !wsAuthed) { pushChatMsg(chatChannel, { sys:true, text:'Not connected to server.' }); chatUI_render(); return; }
     const time = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
     if (chatChannel.startsWith('dm:')) {
       const to = chatChannel.slice(3);
@@ -874,12 +999,71 @@ const RyzOS = (() => {
     } else {
       ws.send(JSON.stringify({ type:'chat', channel:chatChannel, text, time }));
     }
-    inp.value = '';
-    inp.focus();
+  }
+
+  function handleChatCommand(text) {
+    const parts = text.slice(1).split(/\s+/);
+    const cmd = parts[0].toLowerCase();
+    const args = parts.slice(1);
+
+    switch (cmd) {
+      case 'help':
+        pushChatMsg(chatChannel, { sys:true, text:'__HELP__' });
+        break;
+      case 'channels':
+      case 'list':
+        pushChatMsg(chatChannel, { sys:true, text:'Available channels: ' + [...joinedChannels].map(c => '#' + c).join(', ') });
+        break;
+      case 'join': {
+        const ch = (args[0] || '').replace(/^#/, '').toLowerCase();
+        if (!ch) { pushChatMsg(chatChannel, { sys:true, text:'Usage: /join <channel>' }); break; }
+        if (ch.length > 30) { pushChatMsg(chatChannel, { sys:true, text:'Channel name too long.' }); break; }
+        joinedChannels.add(ch);
+        switchChannel(ch);
+        chatUI_rebuildSidebar();
+        pushChatMsg(ch, { sys:true, text:'Joined #' + ch });
+        break;
+      }
+      case 'leave': {
+        const ch = (args[0] || '').replace(/^#/, '').toLowerCase() || chatChannel;
+        if (ch === 'general') { pushChatMsg(chatChannel, { sys:true, text:'Cannot leave #general.' }); break; }
+        if (ch.startsWith('dm:')) { pushChatMsg(chatChannel, { sys:true, text:'Use this for channels, not DMs.' }); break; }
+        joinedChannels.delete(ch);
+        if (chatChannel === ch) switchChannel('general');
+        chatUI_rebuildSidebar();
+        pushChatMsg(chatChannel, { sys:true, text:'Left #' + ch });
+        break;
+      }
+      case 'dm': case 'msg': case 'whisper': {
+        const to = args[0];
+        const msg = args.slice(1).join(' ');
+        if (!to || !msg) { pushChatMsg(chatChannel, { sys:true, text:'Usage: /dm <user> <message>' }); break; }
+        const time = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+        ws.send(JSON.stringify({ type:'dm', to, text:msg, time }));
+        const ch = 'dm:' + to;
+        pushChatMsg(ch, { user, text:msg, time, self:true });
+        switchChannel(ch);
+        break;
+      }
+      case 'online': case 'users': case 'who':
+        pushChatMsg(chatChannel, { sys:true, text:'Online: ' + (onlineUsers.length ? onlineUsers.join(', ') : 'No one else online') });
+        break;
+      case 'clear':
+        chatMessages[chatChannel] = [];
+        break;
+      case 'nick':
+        pushChatMsg(chatChannel, { sys:true, text:'Nicknames not supported. Your username is: ' + user });
+        break;
+      default:
+        pushChatMsg(chatChannel, { sys:true, text:'Unknown command: /' + cmd + '. Type /help for a list of commands.' });
+    }
+    chatUI_render();
   }
 
   function switchChannel(ch) {
     chatChannel = ch;
+    chatUnread[ch] = 0;
+    updateNotifBadges();
     chatUI_render();
     chatUI_updateSidebar();
     setTimeout(() => { const inp = $('chat-input'); if (inp) inp.focus(); }, 50);
@@ -924,9 +1108,23 @@ const RyzOS = (() => {
     log.innerHTML = '';
     msgs.forEach(m => {
       if (m.sys) {
-        const d = document.createElement('div');
-        d.className = 'chat-sys'; d.textContent = m.text;
-        log.appendChild(d);
+        if (m.text === '__HELP__') {
+          const d = document.createElement('div');
+          d.className = 'chat-help';
+          d.innerHTML = `<b>Chat Commands</b><br>
+            <b>/help</b> — Show this help<br>
+            <b>/channels</b> — List your channels<br>
+            <b>/join #name</b> — Join or create a channel<br>
+            <b>/leave #name</b> — Leave a channel<br>
+            <b>/dm user message</b> — Send a direct message<br>
+            <b>/online</b> — List online users<br>
+            <b>/clear</b> — Clear chat history in current view`;
+          log.appendChild(d);
+        } else {
+          const d = document.createElement('div');
+          d.className = 'chat-sys'; d.textContent = m.text;
+          log.appendChild(d);
+        }
       } else {
         const d = document.createElement('div');
         d.className = 'chat-msg ' + (m.self ? 'self' : 'other');
@@ -938,6 +1136,20 @@ const RyzOS = (() => {
     log.scrollTop = log.scrollHeight;
     chatUI_updateSidebar();
     chatUI_updateStatus();
+  }
+
+  function chatUI_rebuildSidebar() {
+    const list = document.querySelector('.chat-channel-list'); if (!list) return;
+    list.innerHTML = '';
+    joinedChannels.forEach(ch => {
+      const d = document.createElement('div');
+      d.className = 'chat-ch' + (chatChannel === ch ? ' active' : '');
+      d.dataset.ch = ch;
+      d.onclick = () => switchChannel(ch);
+      d.innerHTML = `<span class="ch-hash">#</span> ${esc(ch)}`;
+      list.appendChild(d);
+    });
+    updateNotifBadges();
   }
 
   // ============================================================
@@ -1485,6 +1697,10 @@ const RyzOS = (() => {
       <div class="setting-row">
         <div class="setting-info"><div class="setting-label">Version</div><div class="setting-desc">RyzOS 1.0.0</div></div>
       </div>
+      <div class="setting-row" style="cursor:pointer" onclick="RyzOS.openApp('about')">
+        <div class="setting-info"><div class="setting-label">About RyzOS</div><div class="setting-desc">Created by Aram Doudian and Claude</div></div>
+        <span style="color:var(--text-muted);font-size:18px">→</span>
+      </div>
     </div>`;
   };
   function _toggleDark() {
@@ -1500,7 +1716,13 @@ const RyzOS = (() => {
       <h2>RyzOS</h2>
       <div class="about-ver">Version 1.0.0</div>
       <p>A web-based desktop experience with apps, games, and multi-user chat. Built with HTML, CSS, and JavaScript.</p>
-      <div style="margin-top:20px;font-size:12px;color:var(--text-muted)">© 2026 RyzOS Project</div>
+      <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border);">
+        <div style="font-size:14px;font-weight:600;margin-bottom:8px;">Credits</div>
+        <div style="font-size:13px;color:var(--text-secondary);line-height:1.8;">
+          Created by <span style="color:var(--accent);font-weight:600;">Aram Doudian</span> and <span style="color:var(--accent);font-weight:600;">Claude</span>
+        </div>
+      </div>
+      <div style="margin-top:16px;font-size:12px;color:var(--text-muted)">© 2026 RyzOS Project</div>
     </div>`;
   };
 

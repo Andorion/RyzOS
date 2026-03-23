@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(timeout 5 node server.js)",
+      "Bash(aws sts:*)",
+      "Bash(gh auth:*)",
+      "Bash(where aws:*)",
+      "Read(//c/Users/Berj/.aws/**)",
+      "Bash(AWS=\"/c/Program Files/Amazon/AWSCLIV2/aws.exe\")",
+      "Bash(\"$AWS\" lightsail:*)",
+      "Bash(gcloud --version)",
+      "Bash(where gcloud:*)",
+      "Bash(gcloud auth:*)",
+      "Bash(gcloud config:*)",
+      "Bash(gcloud services:*)",
+      "Bash(gh repo:*)"
+    ]
+  }
+}

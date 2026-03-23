@@ -10,8 +10,16 @@ import { WebSocketServer } from 'ws';
 
 const PORT = process.env.PORT || 8080;
 
-// ---------- In-memory user store ----------
+// ---------- In-memory stores ----------
 const users = {}; // username -> { password }
+const MAX_HISTORY = 100;
+const channelHistory = {}; // channel -> [{user, text, time}]
+
+function pushHistory(channel, msg) {
+  if (!channelHistory[channel]) channelHistory[channel] = [];
+  channelHistory[channel].push(msg);
+  if (channelHistory[channel].length > MAX_HISTORY) channelHistory[channel].shift();
+}
 
 // ---------- MIME map ----------
 const MIME = {
@@ -140,6 +148,14 @@ wss.on('connection', ws => {
         info.authenticated = true;
         info.username = u;
         ws.send(JSON.stringify({ type:'auth-ok', user:u }));
+
+        // Send channel history for default channels
+        for (const ch of ['general', 'random', 'games']) {
+          if (channelHistory[ch] && channelHistory[ch].length > 0) {
+            ws.send(JSON.stringify({ type:'history', channel:ch, messages:channelHistory[ch] }));
+          }
+        }
+
         broadcast({ type:'user-joined', username:u }, ws);
         broadcastAll({ type:'online-users', users:getOnlineUsers() });
         console.log('[RyzOS] Online:', getOnlineUsers().join(', '));
@@ -152,13 +168,10 @@ wss.on('connection', ws => {
       const text = (msg.text || '').slice(0, 2000);
       const channel = (msg.channel || 'general').slice(0, 50);
       if (!text) return;
-      broadcastAll({
-        type: 'chat',
-        channel,
-        user: info.username,
-        text,
-        time: msg.time || new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }),
-      });
+      const time = msg.time || new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+      const chatMsg = { type:'chat', channel, user:info.username, text, time };
+      pushHistory(channel, { user:info.username, text, time });
+      broadcastAll(chatMsg);
     }
 
     // ---------- DIRECT MESSAGE ----------
