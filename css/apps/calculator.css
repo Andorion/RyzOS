@@ -1,0 +1,18 @@
+/* ===== APP: CALCULATOR ===== */
+.calc-display{
+  background:rgba(0,0,0,.3);color:var(--text-primary);font-size:28px;
+  text-align:right;padding:16px;margin:10px;border-radius:10px;
+  min-height:60px;display:flex;align-items:flex-end;justify-content:flex-end;
+  font-family:'Segoe UI',monospace;word-break:break-all;
+}
+.calc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:10px;}
+.calc-btn{
+  padding:14px;border:none;border-radius:8px;font-size:18px;
+  background:var(--bg-secondary);color:var(--text-primary);
+}
+.calc-btn:hover{background:var(--bg-hover);}
+.calc-btn.op{background:rgba(45,125,210,.3);color:#5ea8ff;}
+.calc-btn.op:hover{background:rgba(45,125,210,.5);}
+.calc-btn.eq{background:var(--accent);color:#fff;}
+.calc-btn.eq:hover{background:var(--accent-hover);}
+.calc-btn.clear{background:rgba(255,80,80,.2);color:#ff7b7b;}

@@ -1,0 +1,25 @@
+/* ===== TASKBAR ===== */
+#taskbar{
+  position:fixed;left:0;right:0;bottom:0;height:48px;z-index:5000;
+  background:rgba(20,20,30,0.85);backdrop-filter:blur(16px);
+  border-top:1px solid var(--border);display:none;align-items:center;padding:0 8px;
+}
+#start-btn{
+  width:40px;height:40px;border-radius:8px;border:none;
+  background:transparent;color:#fff;font-size:22px;
+  display:flex;align-items:center;justify-content:center;margin-right:4px;
+}
+#start-btn:hover{background:rgba(255,255,255,0.1);}
+#taskbar-apps{display:flex;gap:2px;flex:1;overflow-x:auto;padding:0 4px;}
+.taskbar-app{
+  height:36px;padding:0 12px;border-radius:6px;border:none;
+  background:var(--bg-secondary);color:#fff;font-size:12px;
+  display:flex;align-items:center;gap:6px;white-space:nowrap;position:relative;
+}
+.taskbar-app:hover{background:rgba(255,255,255,0.12);}
+.taskbar-app.active{background:var(--bg-active);border-bottom:2px solid var(--accent);}
+.taskbar-app .tb-icon{font-size:16px;}
+#sys-tray{
+  display:flex;align-items:center;gap:12px;color:rgba(255,255,255,0.85);
+  font-size:12px;padding:0 12px;height:100%;
+}

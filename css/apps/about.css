@@ -1,0 +1,6 @@
+/* ===== APP: ABOUT ===== */
+.about-app{padding:28px;text-align:center;}
+.about-logo{font-size:64px;margin-bottom:12px;}
+.about-app h2{font-size:22px;font-weight:300;letter-spacing:3px;margin-bottom:4px;}
+.about-ver{font-size:13px;color:var(--text-muted);margin-bottom:20px;}
+.about-app p{font-size:14px;line-height:1.6;color:var(--text-secondary);max-width:360px;margin:0 auto;}

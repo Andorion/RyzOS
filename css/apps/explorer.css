@@ -1,0 +1,26 @@
+/* ===== APP: FILE EXPLORER ===== */
+.explorer{display:flex;flex-direction:column;height:100%;}
+.explorer-toolbar{
+  display:flex;gap:4px;padding:6px 10px;border-bottom:1px solid var(--border);align-items:center;flex-shrink:0;
+}
+.explorer-toolbar button{
+  padding:4px 8px;border-radius:6px;border:none;
+  background:var(--bg-secondary);color:var(--text-primary);font-size:13px;
+}
+.explorer-toolbar button:hover{background:var(--bg-hover);}
+.explorer-path{
+  flex:1;padding:4px 10px;border-radius:6px;border:1px solid var(--border);
+  background:var(--bg-secondary);color:var(--text-primary);font-size:12px;margin-left:4px;
+}
+.explorer-list{flex:1;overflow-y:auto;padding:4px;}
+.explorer-item{
+  display:flex;align-items:center;gap:10px;padding:7px 12px;
+  border-radius:6px;cursor:pointer;font-size:13px;color:var(--text-primary);
+}
+.explorer-item:hover{background:var(--bg-hover);}
+.explorer-item.selected{background:var(--bg-active);}
+.ei-icon{font-size:20px;flex-shrink:0;}
+.ei-name{flex:1;}
+.ei-size{font-size:11px;color:var(--text-muted);min-width:60px;text-align:right;}
+.ei-date{font-size:11px;color:var(--text-muted);min-width:80px;text-align:right;}
+.explorer-status{padding:4px 12px;border-top:1px solid var(--border);font-size:11px;color:var(--text-muted);flex-shrink:0;}

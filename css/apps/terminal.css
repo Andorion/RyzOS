@@ -1,0 +1,12 @@
+/* ===== APP: TERMINAL ===== */
+.terminal{
+  height:100%;background:#0c0c0c;color:#0f0;font-family:'Cascadia Code','Consolas',monospace;
+  font-size:13px;padding:0;display:flex;flex-direction:column;
+}
+.term-output{flex:1;overflow-y:auto;white-space:pre-wrap;word-break:break-all;padding:10px;}
+.term-input-row{display:flex;align-items:center;padding:4px 10px 10px;flex-shrink:0;}
+.term-prompt{color:#0f0;margin-right:6px;white-space:nowrap;font-size:13px;}
+.term-input{
+  flex:1;background:transparent;border:none;color:#0f0;
+  font-family:inherit;font-size:13px;outline:none;caret-color:#0f0;
+}

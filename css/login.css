@@ -1,0 +1,29 @@
+/* ===== LOGIN ===== */
+#login-screen{
+  position:fixed;inset:0;z-index:10000;
+  background:linear-gradient(135deg,#0a1628,#1a3a6b 40%,#2d7dd2);
+  display:flex;align-items:center;justify-content:center;flex-direction:column;color:#fff;
+}
+.login-logo{font-size:64px;margin-bottom:8px;user-select:none;}
+.login-title{font-size:28px;font-weight:300;letter-spacing:4px;margin-bottom:32px;text-transform:uppercase;}
+#login-box{
+  background:rgba(255,255,255,0.12);backdrop-filter:blur(20px);
+  border:1px solid rgba(255,255,255,0.18);border-radius:20px;
+  padding:36px 40px;min-width:340px;text-align:center;
+}
+#login-box input{
+  display:block;width:100%;padding:10px 14px;margin-bottom:12px;
+  border-radius:10px;border:1px solid rgba(255,255,255,0.3);
+  background:rgba(255,255,255,0.1);color:#fff;font-size:14px;outline:none;
+}
+#login-box input::placeholder{color:rgba(255,255,255,0.5);}
+#login-box input:focus{border-color:#5ea8ff;background:rgba(255,255,255,0.18);}
+.login-btns{display:flex;gap:10px;margin-top:6px;}
+.login-btns button{
+  flex:1;padding:10px;border-radius:10px;border:none;font-size:14px;font-weight:600;
+}
+.btn-create{background:rgba(255,255,255,0.15);color:#fff;}
+.btn-create:hover{background:rgba(255,255,255,0.25);}
+.btn-login{background:#2d7dd2;color:#fff;}
+.btn-login:hover{background:#3a8fe0;}
+#login-error{margin-top:12px;color:#ff7b7b;font-size:13px;min-height:18px;}

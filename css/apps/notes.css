@@ -1,0 +1,14 @@
+/* ===== APP: NOTES ===== */
+.notes-app{display:flex;flex-direction:column;height:100%;}
+.notes-toolbar{
+  display:flex;gap:6px;padding:8px 12px;border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.notes-toolbar button{
+  padding:4px 10px;border-radius:6px;border:none;
+  background:var(--bg-secondary);color:var(--text-primary);font-size:12px;
+}
+.notes-toolbar button:hover{background:var(--bg-hover);}
+.notes-app textarea{
+  flex:1;resize:none;border:none;padding:14px;font-size:14px;line-height:1.6;
+  background:transparent;color:var(--text-primary);outline:none;
+}

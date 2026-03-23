@@ -4,11 +4,16 @@
 // Deploy: works on any Node.js host (Render, Railway, Fly, Glitch, etc.)
 
 import { createServer } from 'http';
-import { readFileSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { resolve, extname } from 'path';
 import { WebSocketServer } from 'ws';
 
 const PORT = process.env.PORT || 8080;
+
+// ---------- Version ----------
+const versionFile = resolve('version.json');
+const versionInfo = JSON.parse(readFileSync(versionFile, 'utf8'));
+console.log(`[RyzOS] v${versionInfo.version} build ${versionInfo.build}`);
 
 // ---------- In-memory stores ----------
 const users = {}; // username -> { password }
@@ -39,18 +44,19 @@ const server = createServer((req, res) => {
   if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
 
   // API routes
+  if (req.method === 'GET'  && req.url === '/api/version')     return jsonRes(res, 200, versionInfo);
   if (req.method === 'POST' && req.url === '/api/create-user') return handleCreateUser(req, res);
   if (req.method === 'POST' && req.url === '/api/login')       return handleLogin(req, res);
 
   // Static file serving
   let filePath = req.url.split('?')[0]; // strip query
-  filePath = filePath === '/' ? './RyzOS.html' : '.' + filePath;
+  filePath = filePath === '/' ? './index.html' : '.' + filePath;
   filePath = resolve(filePath);
 
   // Security: stay inside project dir
   if (!filePath.startsWith(resolve('.'))) { res.writeHead(403); res.end('Forbidden'); return; }
 
-  if (!existsSync(filePath)) filePath = resolve('./RyzOS.html'); // SPA fallback
+  if (!existsSync(filePath)) filePath = resolve('./index.html'); // SPA fallback
 
   try {
     const data = readFileSync(filePath);

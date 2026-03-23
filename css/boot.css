@@ -1,0 +1,8 @@
+/* ===== BOOT ===== */
+#boot-screen{
+  position:fixed;inset:0;z-index:9999;background:#000;
+  display:none;align-items:center;justify-content:center;flex-direction:column;color:#fff;
+}
+.boot-logo{font-size:72px;animation:pulse 1.5s ease-in-out infinite;}
+.boot-dots{margin-top:24px;font-size:24px;letter-spacing:8px;}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}

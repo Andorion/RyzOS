@@ -1,10 +1,11 @@
 {
   "name": "ryzos",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "RyzOS - A web-based desktop experience with apps, games, and multi-user chat",
   "type": "module",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "bump": "node scripts/bump-version.js"
   },
   "dependencies": {
     "ws": "^8.16.0"

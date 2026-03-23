@@ -1,0 +1,17 @@
+/* ===== APP: MUSIC ===== */
+.music-app{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:20px;}
+.music-art{
+  width:140px;height:140px;border-radius:16px;display:flex;align-items:center;justify-content:center;
+  font-size:56px;margin-bottom:16px;
+}
+.music-title{font-size:18px;font-weight:600;margin-bottom:4px;}
+.music-artist{font-size:14px;color:var(--text-muted);margin-bottom:16px;}
+.music-controls{display:flex;gap:16px;align-items:center;}
+.music-controls button{
+  width:40px;height:40px;border-radius:50%;border:none;
+  background:var(--bg-secondary);color:var(--text-primary);font-size:16px;
+}
+.music-controls button:hover{background:var(--bg-hover);}
+.music-controls .play-btn{width:52px;height:52px;background:var(--accent);font-size:20px;color:#fff;}
+.music-progress{width:100%;margin-top:16px;}
+.music-progress input[type="range"]{width:100%;cursor:pointer;}

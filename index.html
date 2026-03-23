@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RyzOS</title>
+
+  <!-- CSS: Base -->
+  <link rel="stylesheet" href="/css/reset.css">
+  <link rel="stylesheet" href="/css/theme.css">
+  <link rel="stylesheet" href="/css/scrollbar.css">
+
+  <!-- CSS: OS Chrome -->
+  <link rel="stylesheet" href="/css/login.css">
+  <link rel="stylesheet" href="/css/boot.css">
+  <link rel="stylesheet" href="/css/desktop.css">
+  <link rel="stylesheet" href="/css/taskbar.css">
+  <link rel="stylesheet" href="/css/start-menu.css">
+  <link rel="stylesheet" href="/css/context-menu.css">
+  <link rel="stylesheet" href="/css/window.css">
+  <link rel="stylesheet" href="/css/notifications.css">
+
+  <!-- CSS: Apps -->
+  <link rel="stylesheet" href="/css/apps/messages.css">
+  <link rel="stylesheet" href="/css/apps/calculator.css">
+  <link rel="stylesheet" href="/css/apps/notes.css">
+  <link rel="stylesheet" href="/css/apps/terminal.css">
+  <link rel="stylesheet" href="/css/apps/paint.css">
+  <link rel="stylesheet" href="/css/apps/games.css">
+  <link rel="stylesheet" href="/css/apps/explorer.css">
+  <link rel="stylesheet" href="/css/apps/weather.css">
+  <link rel="stylesheet" href="/css/apps/music.css">
+  <link rel="stylesheet" href="/css/apps/settings.css">
+  <link rel="stylesheet" href="/css/apps/about.css">
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-logo">💠</div>
+  <div class="login-title">RyzOS</div>
+  <div id="login-box">
+    <input id="login-user" type="text" placeholder="Username" autofocus>
+    <input id="login-pass" type="password" placeholder="Password">
+    <div class="login-btns">
+      <button class="btn-create" onclick="RyzOS.createUser()">Create Account</button>
+      <button class="btn-login" onclick="RyzOS.login()">Sign In</button>
+    </div>
+    <div id="login-error"></div>
+  </div>
+</div>
+
+<!-- BOOT -->
+<div id="boot-screen">
+  <div class="boot-logo">💠</div>
+  <div class="boot-dots">⠋</div>
+</div>
+
+<!-- DESKTOP -->
+<div id="desktop"><div id="desktop-icons"></div></div>
+
+<!-- TASKBAR -->
+<div id="taskbar">
+  <button id="start-btn" onclick="RyzOS.toggleStart()" title="Start">💠</button>
+  <div id="taskbar-apps"></div>
+  <div id="sys-tray"><span id="sys-user"></span><span id="sys-clock"></span></div>
+</div>
+
+<!-- START MENU -->
+<div id="start-menu">
+  <input type="text" id="start-search" placeholder="Search apps..." oninput="RyzOS.filterStart(this.value)">
+  <h3>All Apps</h3>
+  <div id="start-grid"></div>
+  <div class="start-user">
+    <span class="uname" id="start-uname"></span>
+    <button onclick="RyzOS.logout()">Sign Out</button>
+  </div>
+</div>
+
+<!-- CONTEXT MENU -->
+<div id="ctx-menu"></div>
+
+<!-- JS: Core (must load first) -->
+<script src="/js/core.js"></script>
+
+<!-- JS: OS Modules (order matters — auth needs desktop/start-menu/websocket/clock) -->
+<script src="/js/desktop.js"></script>
+<script src="/js/start-menu.js"></script>
+<script src="/js/window-manager.js"></script>
+<script src="/js/context-menu.js"></script>
+<script src="/js/clock.js"></script>
+<script src="/js/websocket.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/events.js"></script>
+
+<!-- JS: Apps (order doesn't matter — each self-registers) -->
+<script src="/js/apps/messages.js"></script>
+<script src="/js/apps/notes.js"></script>
+<script src="/js/apps/calculator.js"></script>
+<script src="/js/apps/terminal.js"></script>
+<script src="/js/apps/paint.js"></script>
+<script src="/js/apps/snake.js"></script>
+<script src="/js/apps/minesweeper.js"></script>
+<script src="/js/apps/tictactoe.js"></script>
+<script src="/js/apps/game2048.js"></script>
+<script src="/js/apps/explorer.js"></script>
+<script src="/js/apps/weather.js"></script>
+<script src="/js/apps/music.js"></script>
+<script src="/js/apps/settings.js"></script>
+<script src="/js/apps/about.js"></script>
+
+</body>
+</html>
