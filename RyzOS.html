@@ -1,0 +1,1524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RyzOS</title>
+  <style>
+    /* ===== RESET ===== */
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html,body{height:100%;width:100%;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;overflow:hidden;background:#000;}
+    button{font-family:inherit;cursor:pointer;}
+    input,textarea,select{font-family:inherit;}
+
+    /* ===== THEME ===== */
+    :root{
+      --bg-primary:rgba(28,28,40,0.96);
+      --bg-secondary:rgba(255,255,255,0.06);
+      --bg-hover:rgba(255,255,255,0.1);
+      --bg-active:rgba(80,140,255,0.25);
+      --text-primary:#fff;
+      --text-secondary:rgba(255,255,255,0.7);
+      --text-muted:rgba(255,255,255,0.4);
+      --accent:#2d7dd2;
+      --accent-hover:#3a8fe0;
+      --border:rgba(255,255,255,0.08);
+      --danger:#e81123;
+      --success:#2ed573;
+    }
+    body.light-mode{
+      --bg-primary:rgba(245,245,250,0.97);
+      --bg-secondary:rgba(0,0,0,0.04);
+      --bg-hover:rgba(0,0,0,0.07);
+      --bg-active:rgba(45,125,210,0.15);
+      --text-primary:#1a1a2e;
+      --text-secondary:rgba(0,0,0,0.6);
+      --text-muted:rgba(0,0,0,0.35);
+      --accent:#1a73e8;
+      --accent-hover:#1557b0;
+      --border:rgba(0,0,0,0.1);
+    }
+
+    /* ===== LOGIN ===== */
+    #login-screen{
+      position:fixed;inset:0;z-index:10000;
+      background:linear-gradient(135deg,#0a1628,#1a3a6b 40%,#2d7dd2);
+      display:flex;align-items:center;justify-content:center;flex-direction:column;color:#fff;
+    }
+    .login-logo{font-size:64px;margin-bottom:8px;user-select:none;}
+    .login-title{font-size:28px;font-weight:300;letter-spacing:4px;margin-bottom:32px;text-transform:uppercase;}
+    #login-box{
+      background:rgba(255,255,255,0.12);backdrop-filter:blur(20px);
+      border:1px solid rgba(255,255,255,0.18);border-radius:20px;
+      padding:36px 40px;min-width:340px;text-align:center;
+    }
+    #login-box input{
+      display:block;width:100%;padding:10px 14px;margin-bottom:12px;
+      border-radius:10px;border:1px solid rgba(255,255,255,0.3);
+      background:rgba(255,255,255,0.1);color:#fff;font-size:14px;outline:none;
+    }
+    #login-box input::placeholder{color:rgba(255,255,255,0.5);}
+    #login-box input:focus{border-color:#5ea8ff;background:rgba(255,255,255,0.18);}
+    .login-btns{display:flex;gap:10px;margin-top:6px;}
+    .login-btns button{
+      flex:1;padding:10px;border-radius:10px;border:none;font-size:14px;font-weight:600;
+    }
+    .btn-create{background:rgba(255,255,255,0.15);color:#fff;}
+    .btn-create:hover{background:rgba(255,255,255,0.25);}
+    .btn-login{background:#2d7dd2;color:#fff;}
+    .btn-login:hover{background:#3a8fe0;}
+    #login-error{margin-top:12px;color:#ff7b7b;font-size:13px;min-height:18px;}
+
+    /* ===== BOOT ===== */
+    #boot-screen{
+      position:fixed;inset:0;z-index:9999;background:#000;
+      display:none;align-items:center;justify-content:center;flex-direction:column;color:#fff;
+    }
+    .boot-logo{font-size:72px;animation:pulse 1.5s ease-in-out infinite;}
+    .boot-dots{margin-top:24px;font-size:24px;letter-spacing:8px;}
+    @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+
+    /* ===== DESKTOP ===== */
+    #desktop{
+      position:fixed;inset:0 0 48px 0;
+      background:linear-gradient(160deg,#0f2027,#203a43,#2c5364);
+      display:none;
+    }
+    #desktop-icons{
+      display:grid;grid-template-columns:repeat(auto-fill,90px);
+      grid-auto-rows:95px;gap:4px;padding:16px;
+      align-content:start;height:100%;overflow-y:auto;
+    }
+    .desktop-icon{
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      padding:8px 4px;border-radius:8px;cursor:pointer;user-select:none;
+      transition:background .15s;text-align:center;
+    }
+    .desktop-icon:hover{background:var(--bg-hover);}
+    .di-icon{font-size:36px;margin-bottom:4px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.3));}
+    .di-label{color:#fff;font-size:11px;text-shadow:0 1px 4px rgba(0,0,0,.7);line-height:1.2;}
+
+    /* ===== TASKBAR ===== */
+    #taskbar{
+      position:fixed;left:0;right:0;bottom:0;height:48px;z-index:5000;
+      background:rgba(20,20,30,0.85);backdrop-filter:blur(16px);
+      border-top:1px solid var(--border);display:none;align-items:center;padding:0 8px;
+    }
+    #start-btn{
+      width:40px;height:40px;border-radius:8px;border:none;
+      background:transparent;color:#fff;font-size:22px;
+      display:flex;align-items:center;justify-content:center;margin-right:4px;
+    }
+    #start-btn:hover{background:rgba(255,255,255,0.1);}
+    #taskbar-apps{display:flex;gap:2px;flex:1;overflow-x:auto;padding:0 4px;}
+    .taskbar-app{
+      height:36px;padding:0 12px;border-radius:6px;border:none;
+      background:var(--bg-secondary);color:#fff;font-size:12px;
+      display:flex;align-items:center;gap:6px;white-space:nowrap;
+    }
+    .taskbar-app:hover{background:rgba(255,255,255,0.12);}
+    .taskbar-app.active{background:var(--bg-active);border-bottom:2px solid var(--accent);}
+    .taskbar-app .tb-icon{font-size:16px;}
+    #sys-tray{
+      display:flex;align-items:center;gap:12px;color:rgba(255,255,255,0.85);
+      font-size:12px;padding:0 12px;height:100%;
+    }
+
+    /* ===== START MENU ===== */
+    #start-menu{
+      position:fixed;left:8px;bottom:56px;width:420px;max-height:520px;
+      background:var(--bg-primary);backdrop-filter:blur(24px);
+      border:1px solid var(--border);border-radius:16px;
+      z-index:6000;display:none;flex-direction:column;
+      box-shadow:0 12px 48px rgba(0,0,0,.5);padding:20px;color:var(--text-primary);
+    }
+    #start-menu h3{font-size:14px;font-weight:400;color:var(--text-muted);margin-bottom:12px;}
+    #start-menu-search{
+      width:100%;padding:10px 14px;border-radius:10px;
+      border:1px solid var(--border);background:var(--bg-secondary);
+      color:var(--text-primary);font-size:14px;outline:none;margin-bottom:16px;
+    }
+    #start-menu-search::placeholder{color:var(--text-muted);}
+    #start-menu-grid{
+      display:grid;grid-template-columns:repeat(4,1fr);gap:8px;
+      overflow-y:auto;max-height:340px;
+    }
+    .start-app{
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      padding:12px 4px;border-radius:10px;cursor:pointer;text-align:center;
+    }
+    .start-app:hover{background:var(--bg-hover);}
+    .sa-icon{font-size:28px;margin-bottom:4px;}
+    .sa-label{font-size:11px;color:var(--text-secondary);line-height:1.2;}
+    .start-user{
+      margin-top:auto;padding-top:12px;border-top:1px solid var(--border);
+      display:flex;justify-content:space-between;align-items:center;
+    }
+    .start-user .uname{font-size:13px;}
+    .start-user button{
+      padding:6px 14px;border-radius:8px;border:none;
+      background:rgba(255,100,100,0.2);color:#ff7b7b;font-size:12px;
+    }
+    .start-user button:hover{background:rgba(255,100,100,0.3);}
+
+    /* ===== CONTEXT MENU ===== */
+    #ctx-menu{
+      position:fixed;z-index:8000;display:none;
+      background:var(--bg-primary);backdrop-filter:blur(16px);
+      border:1px solid var(--border);border-radius:10px;
+      padding:6px;min-width:180px;box-shadow:0 8px 32px rgba(0,0,0,.5);
+    }
+    .ctx-item{
+      padding:8px 14px;border-radius:6px;color:var(--text-primary);font-size:13px;
+      cursor:pointer;display:flex;align-items:center;gap:10px;
+    }
+    .ctx-item:hover{background:var(--bg-hover);}
+    .ctx-sep{height:1px;background:var(--border);margin:4px 8px;}
+
+    /* ===== WINDOWS ===== */
+    .window{
+      position:fixed;min-width:280px;min-height:180px;
+      background:var(--bg-primary);backdrop-filter:blur(12px);
+      border:1px solid var(--border);border-radius:12px;
+      display:flex;flex-direction:column;
+      box-shadow:0 8px 32px rgba(0,0,0,.4);
+      animation:winOpen .2s ease-out;
+    }
+    @keyframes winOpen{from{opacity:0;transform:scale(.95) translateY(10px)}to{opacity:1;transform:none}}
+    .window.maximized{
+      border-radius:0!important;left:0!important;top:0!important;
+      width:100%!important;height:calc(100% - 48px)!important;
+    }
+    .win-header{
+      display:flex;align-items:center;padding:0 4px 0 14px;
+      height:38px;user-select:none;
+      background:var(--bg-secondary);border-bottom:1px solid var(--border);
+      flex-shrink:0;border-radius:12px 12px 0 0;
+    }
+    .window.maximized .win-header{border-radius:0;}
+    .win-icon{font-size:16px;margin-right:8px;}
+    .win-title{flex:1;font-size:13px;color:var(--text-primary);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .win-controls{display:flex;gap:1px;height:100%;}
+    .win-controls button{
+      width:40px;height:100%;border:none;background:transparent;
+      color:var(--text-secondary);font-size:14px;
+    }
+    .win-controls button:hover{background:var(--bg-hover);color:var(--text-primary);}
+    .win-controls .btn-close:hover{background:var(--danger);color:#fff;}
+    .win-body{
+      flex:1;overflow:auto;color:var(--text-primary);position:relative;
+    }
+    .win-resize{
+      position:absolute;right:0;bottom:0;width:18px;height:18px;
+      cursor:nwse-resize;z-index:10;
+    }
+
+    /* ===== APP: MESSAGES ===== */
+    .chat-app{display:flex;height:100%;}
+    .chat-sidebar{
+      width:180px;border-right:1px solid var(--border);display:flex;flex-direction:column;
+      background:rgba(0,0,0,0.15);flex-shrink:0;
+    }
+    .chat-sidebar h4{padding:10px 12px 6px;font-size:12px;color:var(--text-muted);font-weight:500;text-transform:uppercase;letter-spacing:.5px;}
+    .chat-channel-list,.chat-user-list{overflow-y:auto;flex:1;}
+    .chat-ch,.chat-dm{
+      padding:7px 12px;font-size:13px;color:var(--text-secondary);cursor:pointer;
+      border-radius:4px;margin:1px 4px;display:flex;align-items:center;gap:6px;
+    }
+    .chat-ch:hover,.chat-dm:hover{background:var(--bg-hover);}
+    .chat-ch.active,.chat-dm.active{background:var(--bg-active);color:var(--text-primary);}
+    .chat-ch .ch-hash{color:var(--text-muted);font-weight:700;}
+    .chat-dm .dm-dot{width:8px;height:8px;border-radius:50%;background:#555;flex-shrink:0;}
+    .chat-dm .dm-dot.online{background:var(--success);}
+    .chat-main{flex:1;display:flex;flex-direction:column;min-width:0;}
+    .chat-header{
+      padding:8px 14px;border-bottom:1px solid var(--border);font-size:14px;font-weight:600;
+      display:flex;align-items:center;gap:8px;flex-shrink:0;
+    }
+    .chat-header .ch-topic{font-size:12px;color:var(--text-muted);font-weight:400;}
+    .chat-messages{flex:1;overflow-y:auto;padding:10px 14px;display:flex;flex-direction:column;gap:4px;}
+    .chat-msg{max-width:85%;padding:7px 12px;border-radius:12px;font-size:13px;line-height:1.4;word-break:break-word;}
+    .chat-msg.self{align-self:flex-end;background:var(--accent);color:#fff;border-bottom-right-radius:4px;}
+    .chat-msg.other{align-self:flex-start;background:var(--bg-secondary);border-bottom-left-radius:4px;}
+    .chat-msg .msg-author{font-size:11px;font-weight:600;margin-bottom:2px;opacity:.7;}
+    .chat-msg .msg-time{font-size:10px;opacity:.5;margin-top:2px;text-align:right;}
+    .chat-sys{text-align:center;font-size:11px;color:var(--text-muted);padding:4px;}
+    .chat-input-row{display:flex;gap:6px;padding:8px 12px;border-top:1px solid var(--border);flex-shrink:0;}
+    .chat-input-row input{
+      flex:1;padding:8px 12px;border-radius:20px;border:1px solid var(--border);
+      background:var(--bg-secondary);color:var(--text-primary);font-size:13px;outline:none;
+    }
+    .chat-input-row input:focus{border-color:var(--accent);}
+    .chat-input-row button{
+      padding:8px 16px;border-radius:20px;border:none;
+      background:var(--accent);color:#fff;font-size:13px;font-weight:600;
+    }
+    .chat-input-row button:hover{background:var(--accent-hover);}
+
+    /* ===== APP: CALCULATOR ===== */
+    .calc-display{
+      background:rgba(0,0,0,.3);color:var(--text-primary);font-size:28px;
+      text-align:right;padding:16px;margin:10px;border-radius:10px;
+      min-height:60px;display:flex;align-items:flex-end;justify-content:flex-end;
+      font-family:'Segoe UI',monospace;word-break:break-all;
+    }
+    .calc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:10px;}
+    .calc-btn{
+      padding:14px;border:none;border-radius:8px;font-size:18px;
+      background:var(--bg-secondary);color:var(--text-primary);
+    }
+    .calc-btn:hover{background:var(--bg-hover);}
+    .calc-btn.op{background:rgba(45,125,210,.3);color:#5ea8ff;}
+    .calc-btn.op:hover{background:rgba(45,125,210,.5);}
+    .calc-btn.eq{background:var(--accent);color:#fff;}
+    .calc-btn.eq:hover{background:var(--accent-hover);}
+    .calc-btn.clear{background:rgba(255,80,80,.2);color:#ff7b7b;}
+
+    /* ===== APP: NOTES ===== */
+    .notes-app{display:flex;flex-direction:column;height:100%;}
+    .notes-toolbar{
+      display:flex;gap:6px;padding:8px 12px;border-bottom:1px solid var(--border);flex-shrink:0;
+    }
+    .notes-toolbar button{
+      padding:4px 10px;border-radius:6px;border:none;
+      background:var(--bg-secondary);color:var(--text-primary);font-size:12px;
+    }
+    .notes-toolbar button:hover{background:var(--bg-hover);}
+    .notes-app textarea{
+      flex:1;resize:none;border:none;padding:14px;font-size:14px;line-height:1.6;
+      background:transparent;color:var(--text-primary);outline:none;
+    }
+
+    /* ===== APP: TERMINAL ===== */
+    .terminal{
+      height:100%;background:#0c0c0c;color:#0f0;font-family:'Cascadia Code','Consolas',monospace;
+      font-size:13px;padding:0;display:flex;flex-direction:column;
+    }
+    .term-output{flex:1;overflow-y:auto;white-space:pre-wrap;word-break:break-all;padding:10px;}
+    .term-input-row{display:flex;align-items:center;padding:4px 10px 10px;flex-shrink:0;}
+    .term-prompt{color:#0f0;margin-right:6px;white-space:nowrap;font-size:13px;}
+    .term-input{
+      flex:1;background:transparent;border:none;color:#0f0;
+      font-family:inherit;font-size:13px;outline:none;caret-color:#0f0;
+    }
+
+    /* ===== APP: PAINT ===== */
+    .paint-app{display:flex;flex-direction:column;height:100%;}
+    .paint-toolbar{
+      display:flex;gap:6px;padding:8px;border-bottom:1px solid var(--border);
+      flex-wrap:wrap;align-items:center;flex-shrink:0;
+    }
+    .paint-toolbar label{color:var(--text-muted);font-size:12px;}
+    .paint-toolbar input[type="color"]{width:30px;height:26px;border:none;border-radius:4px;cursor:pointer;}
+    .paint-toolbar input[type="range"]{width:80px;cursor:pointer;}
+    .paint-toolbar button{
+      padding:4px 10px;border-radius:6px;border:none;
+      background:var(--bg-secondary);color:var(--text-primary);font-size:12px;
+    }
+    .paint-toolbar button:hover{background:var(--bg-hover);}
+    .paint-toolbar button.active{background:rgba(45,125,210,.4);color:#5ea8ff;}
+    .paint-canvas-wrap{flex:1;overflow:hidden;background:#222;position:relative;}
+    .paint-canvas-wrap canvas{display:block;width:100%;height:100%;}
+
+    /* ===== APP: GAMES COMMON ===== */
+    .game-btn{
+      padding:8px 20px;border-radius:8px;border:none;
+      background:var(--accent);color:#fff;font-size:14px;font-weight:600;margin-top:8px;
+    }
+    .game-btn:hover{background:var(--accent-hover);}
+    .game-center{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:10px;color:var(--text-primary);}
+
+    /* ===== APP: SNAKE ===== */
+    .snake-score{font-size:16px;margin-bottom:8px;}
+    .snake-hint{margin-top:8px;font-size:12px;color:var(--text-muted);}
+
+    /* ===== APP: MINESWEEPER ===== */
+    .mines-header{display:flex;gap:16px;align-items:center;margin-bottom:8px;}
+    .mines-grid{display:grid;gap:1px;background:rgba(255,255,255,.1);border-radius:4px;padding:2px;}
+    .mine-cell{
+      width:28px;height:28px;border:none;border-radius:2px;
+      background:rgba(255,255,255,.12);color:#fff;font-size:13px;font-weight:700;
+      cursor:pointer;display:flex;align-items:center;justify-content:center;
+    }
+    .mine-cell:hover{background:rgba(255,255,255,.2);}
+    .mine-cell.revealed{background:rgba(255,255,255,.04);cursor:default;}
+    .mine-cell.mine{background:rgba(255,60,60,.3);}
+    .mine-cell.flagged{background:rgba(255,200,0,.2);}
+    .mines-hint{margin-top:8px;font-size:11px;color:var(--text-muted);}
+
+    /* ===== APP: TIC-TAC-TOE ===== */
+    .ttt-grid{display:grid;grid-template-columns:repeat(3,80px);gap:4px;margin:16px 0;}
+    .ttt-cell{
+      width:80px;height:80px;border:none;border-radius:8px;
+      background:var(--bg-secondary);color:var(--text-primary);font-size:32px;font-weight:700;cursor:pointer;
+    }
+    .ttt-cell:hover{background:var(--bg-hover);}
+    .ttt-status{font-size:16px;margin-bottom:8px;}
+
+    /* ===== APP: 2048 ===== */
+    .g2048-score{font-size:18px;margin-bottom:8px;}
+    .g2048-grid{display:grid;grid-template-columns:repeat(4,65px);gap:6px;background:rgba(255,255,255,.08);padding:8px;border-radius:10px;}
+    .g2048-cell{
+      width:65px;height:65px;border-radius:6px;display:flex;align-items:center;justify-content:center;
+      font-size:20px;font-weight:700;
+    }
+    .g2048-hint{margin-top:6px;font-size:11px;color:var(--text-muted);}
+
+    /* ===== APP: FILE EXPLORER ===== */
+    .explorer{display:flex;flex-direction:column;height:100%;}
+    .explorer-toolbar{
+      display:flex;gap:4px;padding:6px 10px;border-bottom:1px solid var(--border);align-items:center;flex-shrink:0;
+    }
+    .explorer-toolbar button{
+      padding:4px 8px;border-radius:6px;border:none;
+      background:var(--bg-secondary);color:var(--text-primary);font-size:13px;
+    }
+    .explorer-toolbar button:hover{background:var(--bg-hover);}
+    .explorer-path{
+      flex:1;padding:4px 10px;border-radius:6px;border:1px solid var(--border);
+      background:var(--bg-secondary);color:var(--text-primary);font-size:12px;margin-left:4px;
+    }
+    .explorer-list{flex:1;overflow-y:auto;padding:4px;}
+    .explorer-item{
+      display:flex;align-items:center;gap:10px;padding:7px 12px;
+      border-radius:6px;cursor:pointer;font-size:13px;color:var(--text-primary);
+    }
+    .explorer-item:hover{background:var(--bg-hover);}
+    .explorer-item.selected{background:var(--bg-active);}
+    .ei-icon{font-size:20px;flex-shrink:0;}
+    .ei-name{flex:1;}
+    .ei-size{font-size:11px;color:var(--text-muted);min-width:60px;text-align:right;}
+    .ei-date{font-size:11px;color:var(--text-muted);min-width:80px;text-align:right;}
+    .explorer-status{padding:4px 12px;border-top:1px solid var(--border);font-size:11px;color:var(--text-muted);flex-shrink:0;}
+
+    /* ===== APP: WEATHER ===== */
+    .weather-app{padding:20px;text-align:center;}
+    .weather-icon{font-size:64px;}
+    .weather-temp{font-size:64px;font-weight:200;margin:8px 0;}
+    .weather-desc{font-size:18px;color:var(--text-secondary);}
+    .weather-loc{font-size:13px;color:var(--text-muted);margin-top:4px;}
+    .weather-details{display:flex;justify-content:center;gap:24px;margin-top:20px;}
+    .wd-item{text-align:center;}
+    .wd-label{font-size:11px;color:var(--text-muted);}
+    .wd-value{font-size:16px;margin-top:2px;}
+
+    /* ===== APP: MUSIC ===== */
+    .music-app{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:20px;}
+    .music-art{
+      width:140px;height:140px;border-radius:16px;display:flex;align-items:center;justify-content:center;
+      font-size:56px;margin-bottom:16px;
+    }
+    .music-title{font-size:18px;font-weight:600;margin-bottom:4px;}
+    .music-artist{font-size:14px;color:var(--text-muted);margin-bottom:16px;}
+    .music-controls{display:flex;gap:16px;align-items:center;}
+    .music-controls button{
+      width:40px;height:40px;border-radius:50%;border:none;
+      background:var(--bg-secondary);color:var(--text-primary);font-size:16px;
+    }
+    .music-controls button:hover{background:var(--bg-hover);}
+    .music-controls .play-btn{width:52px;height:52px;background:var(--accent);font-size:20px;color:#fff;}
+    .music-progress{width:100%;margin-top:16px;}
+    .music-progress input[type="range"]{width:100%;cursor:pointer;}
+
+    /* ===== APP: SETTINGS ===== */
+    .settings-app{padding:20px;}
+    .settings-app h3{font-size:16px;margin-bottom:16px;font-weight:500;}
+    .setting-row{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:12px 0;border-bottom:1px solid var(--border);
+    }
+    .setting-info{flex:1;}
+    .setting-label{font-size:14px;}
+    .setting-desc{font-size:11px;color:var(--text-muted);margin-top:2px;}
+    .toggle{
+      width:44px;height:24px;border-radius:12px;border:none;
+      background:rgba(255,255,255,.15);cursor:pointer;position:relative;transition:.2s;
+    }
+    .toggle.on{background:var(--accent);}
+    .toggle::after{
+      content:'';position:absolute;top:3px;left:3px;
+      width:18px;height:18px;border-radius:50%;background:#fff;transition:.2s;
+    }
+    .toggle.on::after{left:23px;}
+
+    /* ===== APP: ABOUT ===== */
+    .about-app{padding:28px;text-align:center;}
+    .about-logo{font-size:64px;margin-bottom:12px;}
+    .about-app h2{font-size:22px;font-weight:300;letter-spacing:3px;margin-bottom:4px;}
+    .about-ver{font-size:13px;color:var(--text-muted);margin-bottom:20px;}
+    .about-app p{font-size:14px;line-height:1.6;color:var(--text-secondary);max-width:360px;margin:0 auto;}
+
+    /* ===== SCROLLBAR ===== */
+    ::-webkit-scrollbar{width:6px;height:6px;}
+    ::-webkit-scrollbar-track{background:transparent;}
+    ::-webkit-scrollbar-thumb{background:rgba(128,128,128,.3);border-radius:3px;}
+    ::-webkit-scrollbar-thumb:hover{background:rgba(128,128,128,.5);}
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-logo">💠</div>
+  <div class="login-title">RyzOS</div>
+  <div id="login-box">
+    <input id="login-user" type="text" placeholder="Username" autofocus>
+    <input id="login-pass" type="password" placeholder="Password">
+    <div class="login-btns">
+      <button class="btn-create" onclick="RyzOS.createUser()">Create Account</button>
+      <button class="btn-login" onclick="RyzOS.login()">Sign In</button>
+    </div>
+    <div id="login-error"></div>
+  </div>
+</div>
+
+<!-- BOOT -->
+<div id="boot-screen">
+  <div class="boot-logo">💠</div>
+  <div class="boot-dots">⠋</div>
+</div>
+
+<!-- DESKTOP -->
+<div id="desktop"><div id="desktop-icons"></div></div>
+
+<!-- TASKBAR -->
+<div id="taskbar">
+  <button id="start-btn" onclick="RyzOS.toggleStart()" title="Start">💠</button>
+  <div id="taskbar-apps"></div>
+  <div id="sys-tray"><span id="sys-user"></span><span id="sys-clock"></span></div>
+</div>
+
+<!-- START MENU -->
+<div id="start-menu">
+  <input type="text" id="start-search" placeholder="Search apps..." oninput="RyzOS.filterStart(this.value)">
+  <h3>All Apps</h3>
+  <div id="start-grid"></div>
+  <div class="start-user">
+    <span class="uname" id="start-uname"></span>
+    <button onclick="RyzOS.logout()">Sign Out</button>
+  </div>
+</div>
+
+<!-- CONTEXT MENU -->
+<div id="ctx-menu"></div>
+
+<script>
+// ============================================================
+//  RyzOS — single namespace, clean architecture
+// ============================================================
+const RyzOS = (() => {
+  // ---------- APP REGISTRY ----------
+  const APPS = [
+    { id:'messages',    name:'Messages',    icon:'💬', w:580, h:440 },
+    { id:'notes',       name:'Notes',       icon:'📝', w:450, h:380 },
+    { id:'calculator',  name:'Calculator',  icon:'🧮', w:320, h:460 },
+    { id:'terminal',    name:'Terminal',     icon:'⬛', w:560, h:380 },
+    { id:'paint',       name:'Paint',       icon:'🎨', w:640, h:480 },
+    { id:'snake',       name:'Snake',       icon:'🐍', w:380, h:440 },
+    { id:'minesweeper', name:'Minesweeper', icon:'💣', w:380, h:460 },
+    { id:'tictactoe',   name:'Tic-Tac-Toe', icon:'⭕', w:320, h:400 },
+    { id:'game2048',    name:'2048',        icon:'🔢', w:340, h:420 },
+    { id:'explorer',    name:'Files',       icon:'📁', w:520, h:400 },
+    { id:'weather',     name:'Weather',     icon:'🌤️', w:360, h:360 },
+    { id:'music',       name:'Music',       icon:'🎵', w:340, h:420 },
+    { id:'settings',    name:'Settings',    icon:'⚙️', w:450, h:400 },
+    { id:'about',       name:'About RyzOS', icon:'💠', w:380, h:360 },
+  ];
+  const DESKTOP_IDS = ['messages','notes','calculator','terminal','paint','snake','minesweeper','tictactoe','game2048','explorer','music','settings'];
+
+  // ---------- STATE ----------
+  let user = null, pass = null;
+  let ws = null, wsAuthed = false;
+  let zIdx = 100;
+  const wins = {};          // appId -> DOM element
+  let startOpen = false;
+  let dragState = null;     // { win, type, ... }
+  let wpIdx = 0;
+  const wallpapers = [
+    'linear-gradient(160deg,#0f2027,#203a43,#2c5364)',
+    'linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)',
+    'linear-gradient(160deg,#0d0221,#0d324d,#7b2d8e)',
+    'linear-gradient(135deg,#141e30,#243b55)',
+    'linear-gradient(160deg,#232526,#414345)',
+    'linear-gradient(135deg,#0c0c0c,#1a1a2e,#e94560)',
+    'linear-gradient(160deg,#000428,#004e92)',
+  ];
+
+  // Chat state
+  let chatChannel = 'general';        // current channel or "dm:<user>"
+  const chatMessages = {};            // channel -> [msgs]
+  let onlineUsers = [];
+
+  // Per-app state
+  let notesContent = '';
+  let calcDisp = '0', calcPrev = null, calcOp = null, calcReset = false;
+  let termCwd = '~';
+  const termFS = {
+    '~': { t:'d', c:{
+      'Desktop':   { t:'d', c:{} },
+      'Documents': { t:'d', c:{
+        'readme.txt': { t:'f', data:'Welcome to RyzOS!\nYour personal web-based operating system.' },
+        'todo.txt':   { t:'f', data:'1. Have fun\n2. Try all the apps\n3. Play some games\n4. Chat with friends' },
+        'notes.txt':  { t:'f', data:'RyzOS notes file.\nEdit me!' },
+      }},
+      'Pictures':  { t:'d', c:{
+        'wallpaper_info.txt': { t:'f', data:'Right-click the desktop to change wallpaper.' },
+      }},
+      'Music':     { t:'d', c:{
+        'playlist.txt': { t:'f', data:'Neon Nights - Synthwave FM\nDigital Dreams - Cyber Pulse\nMidnight Drive - Retro Waves' },
+      }},
+      'Downloads': { t:'d', c:{} },
+    }}
+  };
+  let paintDrawing = false, paintColor = '#ffffff', paintSize = 4, paintTool = 'brush';
+  let snakeInterval = null, snakeState = null;
+  let minesState = null;
+  let tttBoard = null, tttOver = false;
+  let g2048 = null;
+  let musicIdx = 0, musicPlaying = false;
+  const tracks = [
+    { title:'Neon Nights',     artist:'Synthwave FM',  dur:'3:42', grad:'linear-gradient(135deg,#667eea,#764ba2)' },
+    { title:'Digital Dreams',  artist:'Cyber Pulse',   dur:'4:15', grad:'linear-gradient(135deg,#f093fb,#f5576c)' },
+    { title:'Midnight Drive',  artist:'Retro Waves',   dur:'3:58', grad:'linear-gradient(135deg,#4facfe,#00f2fe)' },
+    { title:'Electric Sunset', artist:'Vapor Trail',   dur:'5:01', grad:'linear-gradient(135deg,#43e97b,#38f9d7)' },
+    { title:'Binary Stars',   artist:'Data Flow',     dur:'4:33', grad:'linear-gradient(135deg,#fa709a,#fee140)' },
+  ];
+  // Explorer state
+  let explorerPath = '~';
+
+  // ---------- HELPERS ----------
+  const $ = id => document.getElementById(id);
+  const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+  // ---------- LOGIN / BOOT ----------
+  function setLoginErr(m) { $('login-error').textContent = m || ''; }
+
+  async function createUser() {
+    const u = $('login-user').value.trim(), p = $('login-pass').value.trim();
+    if (!u || !p) { setLoginErr('Username & password required.'); return; }
+    try {
+      const r = await fetch('/api/create-user', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username:u,password:p}) });
+      const d = await r.json();
+      setLoginErr(d.ok ? 'Account created! Sign in now.' : (d.error||'Failed.'));
+    } catch { setLoginErr('Server not reachable.'); }
+  }
+
+  async function login() {
+    const u = $('login-user').value.trim(), p = $('login-pass').value.trim();
+    if (!u || !p) { setLoginErr('Username & password required.'); return; }
+    try {
+      const r = await fetch('/api/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username:u,password:p}) });
+      const d = await r.json();
+      if (!d.ok) { setLoginErr(d.error||'Login failed.'); return; }
+    } catch { setLoginErr('Server not reachable.'); return; }
+    user = u; pass = p;
+    boot();
+  }
+
+  function boot() {
+    $('login-screen').style.display = 'none';
+    const b = $('boot-screen'); b.style.display = 'flex';
+    const dots = b.querySelector('.boot-dots');
+    const fr = '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'.split('');
+    let i = 0;
+    const iv = setInterval(() => { dots.textContent = fr[i++ % fr.length]; }, 100);
+    setTimeout(() => { clearInterval(iv); b.style.display = 'none'; enterDesktop(); }, 1200);
+  }
+
+  function enterDesktop() {
+    $('desktop').style.display = 'block';
+    $('taskbar').style.display = 'flex';
+    $('sys-user').textContent = user;
+    $('start-uname').textContent = user;
+    buildDesktopIcons();
+    buildStartMenu();
+    connectWS();
+    tickClock();
+  }
+
+  function logout() {
+    if (ws) ws.close();
+    ws = null; wsAuthed = false; user = null; pass = null;
+    Object.keys(wins).forEach(closeApp);
+    $('taskbar-apps').innerHTML = '';
+    $('desktop').style.display = 'none';
+    $('taskbar').style.display = 'none';
+    closeStart();
+    $('login-screen').style.display = 'flex';
+    $('login-error').textContent = '';
+    chatChannel = 'general';
+    Object.keys(chatMessages).forEach(k => delete chatMessages[k]);
+    onlineUsers = [];
+  }
+
+  // ---------- DESKTOP ICONS ----------
+  function buildDesktopIcons() {
+    const c = $('desktop-icons'); c.innerHTML = '';
+    DESKTOP_IDS.forEach(id => {
+      const a = APPS.find(x => x.id === id);
+      if (!a) return;
+      const d = document.createElement('div');
+      d.className = 'desktop-icon';
+      d.ondblclick = () => openApp(a.id);
+      d.innerHTML = `<div class="di-icon">${a.icon}</div><div class="di-label">${a.name}</div>`;
+      c.appendChild(d);
+    });
+  }
+
+  // ---------- START MENU ----------
+  function buildStartMenu() {
+    const g = $('start-grid'); g.innerHTML = '';
+    APPS.forEach(a => {
+      const d = document.createElement('div');
+      d.className = 'start-app'; d.dataset.name = a.name.toLowerCase();
+      d.onclick = () => { openApp(a.id); closeStart(); };
+      d.innerHTML = `<div class="sa-icon">${a.icon}</div><div class="sa-label">${a.name}</div>`;
+      g.appendChild(d);
+    });
+  }
+  function toggleStart() { startOpen ? closeStart() : openStart(); }
+  function openStart() { $('start-menu').style.display = 'flex'; startOpen = true; $('start-search').value = ''; filterStart(''); $('start-search').focus(); }
+  function closeStart() { $('start-menu').style.display = 'none'; startOpen = false; }
+  function filterStart(q) {
+    q = q.toLowerCase();
+    document.querySelectorAll('.start-app').forEach(el => { el.style.display = el.dataset.name.includes(q) ? '' : 'none'; });
+  }
+
+  // ---------- CONTEXT MENU ----------
+  function showCtx(e) {
+    if (e.target.closest('.window') || e.target.closest('#taskbar') || e.target.closest('#start-menu')) return;
+    e.preventDefault();
+    const m = $('ctx-menu');
+    m.style.left = e.clientX + 'px'; m.style.top = e.clientY + 'px'; m.style.display = 'block';
+    m.innerHTML = `
+      <div class="ctx-item" onclick="RyzOS.changeWP();RyzOS.closeCtx()">🖼️ Change Wallpaper</div>
+      <div class="ctx-item" onclick="RyzOS.openApp('settings');RyzOS.closeCtx()">⚙️ Settings</div>
+      <div class="ctx-sep"></div>
+      <div class="ctx-item" onclick="RyzOS.openApp('terminal');RyzOS.closeCtx()">⬛ Open Terminal</div>
+      <div class="ctx-item" onclick="RyzOS.openApp('about');RyzOS.closeCtx()">💠 About RyzOS</div>`;
+  }
+  function closeCtx() { $('ctx-menu').style.display = 'none'; }
+  function changeWP() {
+    wpIdx = (wpIdx + 1) % wallpapers.length;
+    $('desktop').style.background = wallpapers[wpIdx];
+  }
+
+  // ---------- CLOCK ----------
+  function tickClock() {
+    const el = $('sys-clock');
+    if (el) el.textContent = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+    setTimeout(tickClock, 10000);
+  }
+
+  // ---------- WINDOW MANAGEMENT ----------
+  function openApp(id) {
+    if (wins[id]) { focusWin(wins[id]); return; }
+    const app = APPS.find(a => a.id === id);
+    if (!app) return;
+
+    const w = document.createElement('div');
+    w.className = 'window'; w.id = 'win-' + id;
+    w.style.width = app.w + 'px'; w.style.height = app.h + 'px';
+    w.style.left = Math.max(20, (innerWidth - app.w) / 2 + (Math.random()*60-30)|0) + 'px';
+    w.style.top  = Math.max(20, (innerHeight - 48 - app.h) / 2 + (Math.random()*40-20)|0) + 'px';
+    w.style.zIndex = zIdx++;
+
+    const hdr = document.createElement('div');
+    hdr.className = 'win-header';
+    hdr.innerHTML = `<span class="win-icon">${app.icon}</span><span class="win-title">${app.name}</span>
+      <div class="win-controls">
+        <button data-act="min" title="Minimize">─</button>
+        <button data-act="max" title="Maximize">☐</button>
+        <button data-act="close" class="btn-close" title="Close">✕</button>
+      </div>`;
+
+    // Header drag — only when directly on the header background, not on buttons
+    hdr.addEventListener('mousedown', e => {
+      if (e.target.closest('.win-controls') || e.target.tagName === 'BUTTON') return;
+      if (w.classList.contains('maximized')) return;
+      e.preventDefault();
+      const r = w.getBoundingClientRect();
+      dragState = { win:w, type:'move', ox:e.clientX-r.left, oy:e.clientY-r.top };
+      focusWin(w);
+    });
+
+    // Window control buttons
+    hdr.querySelector('[data-act="min"]').onclick = () => { w.style.display = 'none'; };
+    hdr.querySelector('[data-act="max"]').onclick = () => { w.classList.toggle('maximized'); };
+    hdr.querySelector('[data-act="close"]').onclick = () => { closeApp(id); };
+
+    const body = document.createElement('div');
+    body.className = 'win-body'; body.id = 'body-' + id;
+
+    const rh = document.createElement('div');
+    rh.className = 'win-resize';
+    rh.addEventListener('mousedown', e => {
+      if (w.classList.contains('maximized')) return;
+      e.preventDefault(); e.stopPropagation();
+      const r = w.getBoundingClientRect();
+      dragState = { win:w, type:'resize', sw:r.width, sh:r.height, sx:e.clientX, sy:e.clientY };
+    });
+
+    w.appendChild(hdr); w.appendChild(body); w.appendChild(rh);
+    w.addEventListener('mousedown', e => {
+      // Don't steal focus from inputs
+      if (e.target.matches('input,textarea,canvas,select,button,[tabindex]')) return;
+      focusWin(w);
+    });
+
+    document.body.appendChild(w);
+    wins[id] = w;
+    initApp(id, body);
+    addTbBtn(id);
+    focusWin(w);
+  }
+
+  function closeApp(id) {
+    const w = wins[id];
+    if (w) { w.remove(); delete wins[id]; }
+    if (id === 'snake' && snakeInterval) { clearInterval(snakeInterval); snakeInterval = null; }
+    if (id === 'game2048') g2048 = null;
+    removeTbBtn(id);
+  }
+
+  function focusWin(w) {
+    if (!w) return;
+    w.style.display = 'flex'; w.style.zIndex = zIdx++;
+    document.querySelectorAll('.taskbar-app').forEach(b => b.classList.remove('active'));
+    const tb = $('tb-' + w.id.replace('win-',''));
+    if (tb) tb.classList.add('active');
+  }
+
+  function addTbBtn(id) {
+    const a = APPS.find(x => x.id === id); if (!a) return;
+    const b = document.createElement('button');
+    b.className = 'taskbar-app active'; b.id = 'tb-' + id;
+    b.innerHTML = `<span class="tb-icon">${a.icon}</span>${a.name}`;
+    b.onclick = () => {
+      const w = wins[id]; if (!w) return;
+      if (w.style.display === 'none') focusWin(w);
+      else if (+w.style.zIndex >= zIdx - 1) w.style.display = 'none';
+      else focusWin(w);
+    };
+    $('taskbar-apps').appendChild(b);
+  }
+  function removeTbBtn(id) { const b = $('tb-'+id); if (b) b.remove(); }
+
+  // ---------- DRAG / RESIZE (global) ----------
+  document.addEventListener('mousemove', e => {
+    if (!dragState) return;
+    e.preventDefault();
+    const d = dragState;
+    if (d.type === 'move') {
+      d.win.style.left = (e.clientX - d.ox) + 'px';
+      d.win.style.top  = (e.clientY - d.oy) + 'px';
+    } else if (d.type === 'resize') {
+      d.win.style.width  = Math.max(280, d.sw + e.clientX - d.sx) + 'px';
+      d.win.style.height = Math.max(180, d.sh + e.clientY - d.sy) + 'px';
+      // Notify paint canvas if open
+      if (d.win.id === 'win-paint') resizePaintCanvas();
+    }
+  });
+  document.addEventListener('mouseup', () => { dragState = null; });
+
+  // ---------- GLOBAL EVENTS ----------
+  document.addEventListener('keydown', e => {
+    if ($('login-screen').style.display !== 'none' && e.key === 'Enter') login();
+    if (e.key === 'Escape' && startOpen) closeStart();
+  });
+  document.addEventListener('click', e => {
+    if (startOpen && !e.target.closest('#start-menu') && !e.target.closest('#start-btn')) closeStart();
+    if (!e.target.closest('#ctx-menu')) $('ctx-menu').style.display = 'none';
+  });
+  document.addEventListener('contextmenu', showCtx);
+
+  // ============================================================
+  //  WEBSOCKET / CHAT
+  // ============================================================
+  function connectWS() {
+    const loc = location;
+    ws = new WebSocket((loc.protocol === 'https:' ? 'wss://' : 'ws://') + loc.host);
+    ws.onopen = () => { ws.send(JSON.stringify({ type:'auth', username:user, password:pass })); };
+    ws.onclose = () => { wsAuthed = false; if (user) setTimeout(connectWS, 3000); };
+    ws.onmessage = ev => {
+      let m; try { m = JSON.parse(ev.data); } catch { return; }
+      if (m.type === 'auth-ok')      { wsAuthed = true; chatUI_updateStatus(); return; }
+      if (m.type === 'online-users') { onlineUsers = m.users || []; chatUI_updateUsers(); return; }
+      if (m.type === 'user-joined')  { pushChatMsg('general', { sys:true, text: m.username + ' joined' }); chatUI_render(); return; }
+      if (m.type === 'user-left')    { pushChatMsg('general', { sys:true, text: m.username + ' left' }); chatUI_render(); return; }
+      if (m.type === 'chat')         { pushChatMsg(m.channel||'general', { user:m.user, text:m.text, time:m.time, self: m.user===user }); chatUI_render(); return; }
+      if (m.type === 'dm')           {
+        const ch = 'dm:' + (m.from === user ? m.to : m.from);
+        pushChatMsg(ch, { user:m.from, text:m.text, time:m.time, self: m.from===user });
+        chatUI_render();
+        return;
+      }
+    };
+  }
+
+  function pushChatMsg(ch, msg) {
+    if (!chatMessages[ch]) chatMessages[ch] = [];
+    chatMessages[ch].push(msg);
+    if (chatMessages[ch].length > 500) chatMessages[ch].shift();
+  }
+
+  function sendChat() {
+    const inp = $('chat-input'); if (!inp) return;
+    const text = inp.value.trim(); if (!text || !ws || !wsAuthed) return;
+    const time = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    if (chatChannel.startsWith('dm:')) {
+      const to = chatChannel.slice(3);
+      ws.send(JSON.stringify({ type:'dm', to, text, time }));
+      pushChatMsg(chatChannel, { user, text, time, self:true });
+      chatUI_render();
+    } else {
+      ws.send(JSON.stringify({ type:'chat', channel:chatChannel, text, time }));
+    }
+    inp.value = '';
+    inp.focus();
+  }
+
+  function switchChannel(ch) {
+    chatChannel = ch;
+    chatUI_render();
+    chatUI_updateSidebar();
+    setTimeout(() => { const inp = $('chat-input'); if (inp) inp.focus(); }, 50);
+  }
+
+  // Chat UI helpers
+  function chatUI_updateStatus() {
+    const el = $('chat-status'); if (el) el.textContent = wsAuthed ? '● Connected' : '○ Connecting...';
+    if (el) el.style.color = wsAuthed ? 'var(--success)' : 'var(--text-muted)';
+  }
+  function chatUI_updateUsers() {
+    const list = $('chat-user-list'); if (!list) return;
+    list.innerHTML = '';
+    onlineUsers.forEach(u => {
+      const d = document.createElement('div');
+      d.className = 'chat-dm' + (chatChannel === 'dm:'+u ? ' active' : '');
+      if (u === user) return; // don't show self
+      d.innerHTML = `<span class="dm-dot online"></span>${esc(u)}`;
+      d.onclick = () => switchChannel('dm:'+u);
+      list.appendChild(d);
+    });
+  }
+  function chatUI_updateSidebar() {
+    // highlight active channel
+    document.querySelectorAll('.chat-ch').forEach(el => {
+      el.classList.toggle('active', el.dataset.ch === chatChannel);
+    });
+    document.querySelectorAll('.chat-dm').forEach(el => {
+      const u = el.textContent.trim();
+      el.classList.toggle('active', chatChannel === 'dm:'+u);
+    });
+    // update header
+    const hdr = $('chat-ch-header');
+    if (hdr) {
+      if (chatChannel.startsWith('dm:')) hdr.textContent = '💬 ' + chatChannel.slice(3);
+      else hdr.textContent = '# ' + chatChannel;
+    }
+  }
+  function chatUI_render() {
+    const log = $('chat-log'); if (!log) return;
+    const msgs = chatMessages[chatChannel] || [];
+    log.innerHTML = '';
+    msgs.forEach(m => {
+      if (m.sys) {
+        const d = document.createElement('div');
+        d.className = 'chat-sys'; d.textContent = m.text;
+        log.appendChild(d);
+      } else {
+        const d = document.createElement('div');
+        d.className = 'chat-msg ' + (m.self ? 'self' : 'other');
+        d.innerHTML = (m.self ? '' : `<div class="msg-author">${esc(m.user||'')}</div>`) +
+          esc(m.text||'') + `<div class="msg-time">${esc(m.time||'')}</div>`;
+        log.appendChild(d);
+      }
+    });
+    log.scrollTop = log.scrollHeight;
+    chatUI_updateSidebar();
+    chatUI_updateStatus();
+  }
+
+  // ============================================================
+  //  APP INIT DISPATCHER
+  // ============================================================
+  function initApp(id, body) {
+    const fn = appInits[id];
+    if (fn) fn(body); else body.innerHTML = `<div style="padding:20px">App "${id}" not implemented yet.</div>`;
+  }
+
+  const appInits = {};
+
+  // ---------- MESSAGES ----------
+  appInits.messages = (body) => {
+    body.innerHTML = `<div class="chat-app">
+      <div class="chat-sidebar">
+        <h4>Channels</h4>
+        <div class="chat-channel-list">
+          <div class="chat-ch active" data-ch="general" onclick="RyzOS.switchChannel('general')"><span class="ch-hash">#</span> general</div>
+          <div class="chat-ch" data-ch="random" onclick="RyzOS.switchChannel('random')"><span class="ch-hash">#</span> random</div>
+          <div class="chat-ch" data-ch="games" onclick="RyzOS.switchChannel('games')"><span class="ch-hash">#</span> games</div>
+        </div>
+        <h4>Online</h4>
+        <div class="chat-user-list" id="chat-user-list"></div>
+      </div>
+      <div class="chat-main">
+        <div class="chat-header"><span id="chat-ch-header"># general</span><span id="chat-status" style="margin-left:auto;font-size:11px;"></span></div>
+        <div class="chat-messages" id="chat-log"></div>
+        <div class="chat-input-row">
+          <input id="chat-input" placeholder="Type a message..." autocomplete="off">
+          <button onclick="RyzOS.sendChat()">Send</button>
+        </div>
+      </div>
+    </div>`;
+    $('chat-input').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); sendChat(); } });
+    chatUI_updateUsers();
+    chatUI_render();
+  };
+
+  // ---------- NOTES ----------
+  appInits.notes = (body) => {
+    body.innerHTML = `<div class="notes-app">
+      <div class="notes-toolbar">
+        <button onclick="RyzOS._notesSave()">💾 Save</button>
+        <button onclick="RyzOS._notesClear()">🗑️ Clear</button>
+      </div>
+      <textarea id="notes-area" placeholder="Start typing your notes...">${esc(notesContent)}</textarea>
+    </div>`;
+    $('notes-area').addEventListener('input', function() { notesContent = this.value; });
+  };
+  function _notesSave() {
+    const t = $('notes-area')?.value || '';
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([t],{type:'text/plain'}));
+    a.download = 'notes.txt'; a.click();
+  }
+  function _notesClear() { const a = $('notes-area'); if (a) { a.value = ''; notesContent = ''; } }
+
+  // ---------- CALCULATOR ----------
+  appInits.calculator = (body) => {
+    body.innerHTML = `<div class="calc-display" id="calc-disp">${calcDisp}</div>
+      <div class="calc-grid">
+        <button class="calc-btn clear" onclick="RyzOS._calcClear()">C</button>
+        <button class="calc-btn op" onclick="RyzOS._calcIn('±')">±</button>
+        <button class="calc-btn op" onclick="RyzOS._calcIn('%')">%</button>
+        <button class="calc-btn op" onclick="RyzOS._calcOp('/')">÷</button>
+        <button class="calc-btn" onclick="RyzOS._calcIn('7')">7</button>
+        <button class="calc-btn" onclick="RyzOS._calcIn('8')">8</button>
+        <button class="calc-btn" onclick="RyzOS._calcIn('9')">9</button>
+        <button class="calc-btn op" onclick="RyzOS._calcOp('*')">×</button>
+        <button class="calc-btn" onclick="RyzOS._calcIn('4')">4</button>
+        <button class="calc-btn" onclick="RyzOS._calcIn('5')">5</button>
+        <button class="calc-btn" onclick="RyzOS._calcIn('6')">6</button>
+        <button class="calc-btn op" onclick="RyzOS._calcOp('-')">−</button>
+        <button class="calc-btn" onclick="RyzOS._calcIn('1')">1</button>
+        <button class="calc-btn" onclick="RyzOS._calcIn('2')">2</button>
+        <button class="calc-btn" onclick="RyzOS._calcIn('3')">3</button>
+        <button class="calc-btn op" onclick="RyzOS._calcOp('+')">+</button>
+        <button class="calc-btn" onclick="RyzOS._calcIn('0')" style="grid-column:span 2">0</button>
+        <button class="calc-btn" onclick="RyzOS._calcIn('.')">.</button>
+        <button class="calc-btn eq" onclick="RyzOS._calcEq()">=</button>
+      </div>`;
+  };
+  function _calcUpd() { const e = $('calc-disp'); if (e) e.textContent = calcDisp; }
+  function _calcClear() { calcDisp='0'; calcPrev=null; calcOp=null; calcReset=false; _calcUpd(); }
+  function _calcIn(v) {
+    if (v==='±') { calcDisp = String(-parseFloat(calcDisp)); _calcUpd(); return; }
+    if (v==='%') { calcDisp = String(parseFloat(calcDisp)/100); _calcUpd(); return; }
+    if (calcReset) { calcDisp='0'; calcReset=false; }
+    if (v==='.' && calcDisp.includes('.')) return;
+    calcDisp = calcDisp==='0' && v!=='.' ? v : calcDisp+v;
+    _calcUpd();
+  }
+  function _calcOp(op) { calcPrev = parseFloat(calcDisp); calcOp = op; calcReset = true; }
+  function _calcEq() {
+    if (calcOp===null||calcPrev===null) return;
+    const c = parseFloat(calcDisp); let r;
+    switch(calcOp) {
+      case '+': r=calcPrev+c; break; case '-': r=calcPrev-c; break;
+      case '*': r=calcPrev*c; break; case '/': r=c===0?'Error':calcPrev/c; break;
+    }
+    calcDisp=String(r); calcOp=null; calcPrev=null; calcReset=true; _calcUpd();
+  }
+
+  // ---------- TERMINAL ----------
+  appInits.terminal = (body) => {
+    body.innerHTML = `<div class="terminal">
+      <div class="term-output" id="term-out">RyzOS Terminal v1.0\nType "help" for commands.\n\n</div>
+      <div class="term-input-row">
+        <span class="term-prompt" id="term-prompt">${user}@ryzos:${termCwd}$ </span>
+        <input class="term-input" id="term-input" autocomplete="off" spellcheck="false">
+      </div>
+    </div>`;
+    const inp = $('term-input');
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); termExec(); }
+    });
+    // Click anywhere in terminal -> focus input
+    body.addEventListener('click', () => inp.focus());
+    setTimeout(() => inp.focus(), 100);
+  };
+
+  function termPrint(t) { const o=$('term-out'); if(o){o.textContent+=t+'\n'; o.scrollTop=o.scrollHeight;} }
+  function termExec() {
+    const inp = $('term-input'); if(!inp) return;
+    const cmd = inp.value; inp.value = '';
+    termPrint(`${user}@ryzos:${termCwd}$ ${cmd}`);
+    if (!cmd.trim()) return;
+    const parts = cmd.trim().split(/\s+/);
+    const c = parts[0].toLowerCase(), args = parts.slice(1);
+    switch(c) {
+      case 'help': termPrint('Commands: help, echo, clear, ls, cd, cat, mkdir, touch, rm, pwd, date, whoami, uname, cowsay, fortune, neofetch, matrix'); break;
+      case 'echo': termPrint(args.join(' ')); break;
+      case 'clear': $('term-out').textContent = ''; break;
+      case 'pwd': termPrint(termCwd); break;
+      case 'whoami': termPrint(user); break;
+      case 'date': termPrint(new Date().toString()); break;
+      case 'uname': termPrint('RyzOS 1.0.0 x86_64 RyzKernel'); break;
+      case 'ls': {
+        const n = getNode(termCwd);
+        if (n&&n.t==='d') { const k=Object.keys(n.c); termPrint(k.length ? k.map(x => n.c[x].t==='d' ? x+'/' : x).join('  ') : '(empty)'); }
+        else termPrint('Not a directory');
+        break;
+      }
+      case 'cd': {
+        const tgt = args[0]||'~';
+        if (tgt==='~') { termCwd='~'; }
+        else if (tgt==='..') { const p=termCwd.split('/'); if(p.length>1){p.pop();termCwd=p.join('/')||'~';} }
+        else { const n=getNode(termCwd); if(n&&n.t==='d'&&n.c[tgt]&&n.c[tgt].t==='d') termCwd=termCwd==='~'?'~/'+tgt:termCwd+'/'+tgt; else termPrint(`cd: ${tgt}: No such directory`); }
+        $('term-prompt').textContent = `${user}@ryzos:${termCwd}$ `;
+        break;
+      }
+      case 'cat': {
+        if(!args[0]){termPrint('cat: missing file');break;}
+        const n=getNode(termCwd);
+        if(n&&n.t==='d'&&n.c[args[0]]&&n.c[args[0]].t==='f') termPrint(n.c[args[0]].data);
+        else termPrint(`cat: ${args[0]}: No such file`);
+        break;
+      }
+      case 'mkdir': {
+        if(!args[0]){termPrint('mkdir: missing name');break;}
+        const n=getNode(termCwd);
+        if(n&&n.t==='d') { if(n.c[args[0]]) termPrint(`mkdir: ${args[0]}: Already exists`); else { n.c[args[0]]={t:'d',c:{}}; termPrint(`Created directory: ${args[0]}`); } }
+        break;
+      }
+      case 'touch': {
+        if(!args[0]){termPrint('touch: missing name');break;}
+        const n=getNode(termCwd);
+        if(n&&n.t==='d') { if(!n.c[args[0]]) n.c[args[0]]={t:'f',data:''}; termPrint(`Touched: ${args[0]}`); }
+        break;
+      }
+      case 'rm': {
+        if(!args[0]){termPrint('rm: missing name');break;}
+        const n=getNode(termCwd);
+        if(n&&n.t==='d'&&n.c[args[0]]) { delete n.c[args[0]]; termPrint(`Removed: ${args[0]}`); }
+        else termPrint(`rm: ${args[0]}: No such file`);
+        break;
+      }
+      case 'cowsay': {
+        const msg=args.join(' ')||'Moo!'; const b='-'.repeat(msg.length+2);
+        termPrint(` ${b}\n< ${msg} >\n ${b}\n        \\   ^__^\n         \\  (oo)\\_______\n            (__)\\       )\\/\\\n                ||----w |\n                ||     ||`);
+        break;
+      }
+      case 'fortune': {
+        const f=['You will have a great day!','Your code will compile on the first try.','A bug will reveal itself soon.','Today is a good day to try something new.','The cake is a lie.','There are 10 types of people in the world.'];
+        termPrint(f[Math.random()*f.length|0]);
+        break;
+      }
+      case 'neofetch':
+        termPrint(`  💠 RyzOS 1.0.0\n  ━━━━━━━━━━━━━━━\n  User: ${user}\n  Shell: RyzTerm 1.0\n  Resolution: ${innerWidth}x${innerHeight}\n  Theme: ${document.body.classList.contains('light-mode')?'Light':'Dark'}\n  Uptime: Since login`);
+        break;
+      case 'matrix': {
+        termPrint('Entering the Matrix...');
+        let lines=10;
+        const iv=setInterval(()=>{
+          if(lines--<=0){clearInterval(iv);termPrint('...exited.');return;}
+          let l='';for(let i=0;i<40;i++)l+=String.fromCharCode(0x30A0+Math.random()*96);
+          termPrint(l);
+        },150);
+        break;
+      }
+      default: termPrint(`${c}: command not found. Type "help" for commands.`);
+    }
+  }
+  function getNode(path) {
+    const p = path.split('/').filter(Boolean);
+    let n = termFS['~'];
+    if (p[0]==='~') p.shift();
+    for (const s of p) { if (!n||n.t!=='d'||!n.c[s]) return null; n=n.c[s]; }
+    return n;
+  }
+
+  // ---------- PAINT ----------
+  appInits.paint = (body) => {
+    body.innerHTML = `<div class="paint-app">
+      <div class="paint-toolbar">
+        <button class="active" id="pb-brush" onclick="RyzOS._setPaintTool('brush',this)">🖌️ Brush</button>
+        <button id="pb-eraser" onclick="RyzOS._setPaintTool('eraser',this)">🧹 Eraser</button>
+        <label>Color:</label><input type="color" value="#ffffff" onchange="RyzOS._setPaintColor(this.value)">
+        <label>Size:</label><input type="range" min="1" max="30" value="4" oninput="RyzOS._setPaintSize(+this.value)">
+        <button onclick="RyzOS._paintClear()">🗑️ Clear</button>
+        <button onclick="RyzOS._paintSave()">💾 Save</button>
+      </div>
+      <div class="paint-canvas-wrap"><canvas id="paint-canvas"></canvas></div>
+    </div>`;
+    resizePaintCanvas();
+    const canvas = $('paint-canvas');
+    canvas.addEventListener('mousedown', e => { paintDrawing=true; paintDraw(e); });
+    canvas.addEventListener('mousemove', e => { if(paintDrawing) paintDraw(e); });
+    canvas.addEventListener('mouseup', () => { paintDrawing=false; canvas.getContext('2d').beginPath(); });
+    canvas.addEventListener('mouseleave', () => { paintDrawing=false; canvas.getContext('2d').beginPath(); });
+  };
+  function resizePaintCanvas() {
+    const canvas = $('paint-canvas'); if (!canvas) return;
+    const wrap = canvas.parentElement;
+    const w = wrap.clientWidth, h = wrap.clientHeight;
+    if (canvas.width !== w || canvas.height !== h) {
+      // Save current image
+      const old = canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height);
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#1a1a2e'; ctx.fillRect(0,0,w,h);
+      ctx.putImageData(old,0,0);
+    }
+  }
+  function paintDraw(e) {
+    const c=$('paint-canvas'); if(!c) return;
+    const ctx=c.getContext('2d'), r=c.getBoundingClientRect();
+    const x=(e.clientX-r.left)*(c.width/r.width), y=(e.clientY-r.top)*(c.height/r.height);
+    ctx.lineWidth=paintSize; ctx.lineCap='round';
+    ctx.strokeStyle = paintTool==='eraser' ? '#1a1a2e' : paintColor;
+    ctx.lineTo(x,y); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x,y);
+  }
+  function _setPaintTool(t,btn) { paintTool=t; document.querySelectorAll('.paint-toolbar button').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+  function _setPaintColor(c) { paintColor=c; }
+  function _setPaintSize(s) { paintSize=s; }
+  function _paintClear() { const c=$('paint-canvas'); if(!c) return; const ctx=c.getContext('2d'); ctx.fillStyle='#1a1a2e'; ctx.fillRect(0,0,c.width,c.height); }
+  function _paintSave() { const c=$('paint-canvas'); if(!c) return; const a=document.createElement('a'); a.download='painting.png'; a.href=c.toDataURL(); a.click(); }
+
+  // ---------- SNAKE ----------
+  appInits.snake = (body) => {
+    body.innerHTML = `<div class="game-center">
+      <div class="snake-score" id="snake-score">Score: 0</div>
+      <canvas id="snake-canvas" width="300" height="300" style="border:2px solid rgba(255,255,255,.2);border-radius:4px;background:#111;"></canvas>
+      <div class="snake-hint">Arrow keys or WASD to move</div>
+      <button class="game-btn" onclick="RyzOS._startSnake()">Start Game</button>
+    </div>`;
+  };
+  function _startSnake() {
+    if (snakeInterval) clearInterval(snakeInterval);
+    const canvas=$('snake-canvas'); if(!canvas) return;
+    const ctx=canvas.getContext('2d'), gs=15, cols=canvas.width/gs, rows=canvas.height/gs;
+    snakeState = { snake:[{x:10,y:10},{x:9,y:10},{x:8,y:10}], dir:{x:1,y:0}, nextDir:{x:1,y:0},
+      food:{x:Math.random()*cols|0,y:Math.random()*rows|0}, score:0, alive:true };
+    if (canvas._kh) document.removeEventListener('keydown', canvas._kh);
+    const kh = e => {
+      if (!snakeState||!snakeState.alive) return;
+      const s=snakeState;
+      switch(e.key) {
+        case 'ArrowUp':case 'w':case 'W': if(s.dir.y!==1)s.nextDir={x:0,y:-1}; e.preventDefault(); break;
+        case 'ArrowDown':case 's':case 'S': if(s.dir.y!==-1)s.nextDir={x:0,y:1}; e.preventDefault(); break;
+        case 'ArrowLeft':case 'a':case 'A': if(s.dir.x!==1)s.nextDir={x:-1,y:0}; e.preventDefault(); break;
+        case 'ArrowRight':case 'd':case 'D': if(s.dir.x!==-1)s.nextDir={x:1,y:0}; e.preventDefault(); break;
+      }
+    };
+    canvas._kh = kh; document.addEventListener('keydown', kh);
+    snakeInterval = setInterval(() => {
+      if(!snakeState||!snakeState.alive){clearInterval(snakeInterval);return;}
+      const s=snakeState; s.dir=s.nextDir;
+      const head={x:s.snake[0].x+s.dir.x,y:s.snake[0].y+s.dir.y};
+      if(head.x<0||head.x>=cols||head.y<0||head.y>=rows) s.alive=false;
+      if(s.snake.some(p=>p.x===head.x&&p.y===head.y)) s.alive=false;
+      if(!s.alive){document.removeEventListener('keydown',kh);drawSnake(ctx,s,gs,cols,rows);$('snake-score').textContent=`Game Over! Score: ${s.score}`;return;}
+      s.snake.unshift(head);
+      if(head.x===s.food.x&&head.y===s.food.y){s.score+=10;s.food={x:Math.random()*cols|0,y:Math.random()*rows|0};}else s.snake.pop();
+      drawSnake(ctx,s,gs,cols,rows);
+      $('snake-score').textContent = `Score: ${s.score}`;
+    }, 120);
+  }
+  function drawSnake(ctx,s,gs,cols,rows) {
+    ctx.fillStyle='#111';ctx.fillRect(0,0,cols*gs,rows*gs);
+    ctx.fillStyle='#ff4757';ctx.beginPath();ctx.arc(s.food.x*gs+gs/2,s.food.y*gs+gs/2,gs/2-1,0,Math.PI*2);ctx.fill();
+    s.snake.forEach((p,i)=>{ctx.fillStyle=i===0?'#2ed573':'#7bed9f';ctx.fillRect(p.x*gs+1,p.y*gs+1,gs-2,gs-2);});
+  }
+
+  // ---------- MINESWEEPER ----------
+  appInits.minesweeper = (body) => {
+    body.innerHTML = `<div class="game-center">
+      <div class="mines-header">
+        <span id="mines-flags">💣 10</span>
+        <button class="game-btn" onclick="RyzOS._startMines()" style="padding:4px 14px;font-size:12px">New Game</button>
+        <span id="mines-status">Click to start</span>
+      </div>
+      <div class="mines-grid" id="mines-grid"></div>
+      <div class="mines-hint">Left click: reveal | Right click: flag</div>
+    </div>`;
+    _startMines();
+  };
+  function _startMines() {
+    const R=10,C=10,M=10, grid=[];
+    for(let r=0;r<R;r++){grid[r]=[];for(let c=0;c<C;c++)grid[r][c]={mine:false,rev:false,flag:false,cnt:0};}
+    let placed=0;while(placed<M){const r=Math.random()*R|0,c=Math.random()*C|0;if(!grid[r][c].mine){grid[r][c].mine=true;placed++;}}
+    for(let r=0;r<R;r++)for(let c=0;c<C;c++){if(grid[r][c].mine)continue;let n=0;for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){const nr=r+dr,nc=c+dc;if(nr>=0&&nr<R&&nc>=0&&nc<C&&grid[nr][nc].mine)n++;}grid[r][c].cnt=n;}
+    minesState={grid,R,C,M,flags:0,over:false,won:false};
+    renderMines();
+  }
+  function renderMines() {
+    const s=minesState, g=$('mines-grid'); if(!g) return;
+    g.style.gridTemplateColumns = `repeat(${s.C},28px)`;
+    g.innerHTML = '';
+    for(let r=0;r<s.R;r++)for(let c=0;c<s.C;c++){
+      const cell=s.grid[r][c], btn=document.createElement('button');
+      btn.className='mine-cell';
+      if(cell.rev){btn.classList.add('revealed');if(cell.mine){btn.classList.add('mine');btn.textContent='💣';}
+        else if(cell.cnt>0){btn.textContent=cell.cnt;btn.style.color=['','#5ea8ff','#2ed573','#ff4757','#a29bfe','#fd79a8','#00cec9','#636e72','#2d3436'][cell.cnt]||'#fff';}}
+      else if(cell.flag){btn.classList.add('flagged');btn.textContent='🚩';}
+      btn.onclick=()=>minesReveal(r,c);
+      btn.oncontextmenu=e=>{e.preventDefault();minesFlag(r,c);};
+      g.appendChild(btn);
+    }
+    const fl=$('mines-flags');if(fl)fl.textContent=`💣 ${s.M-s.flags}`;
+    const st=$('mines-status');if(st){if(s.over)st.textContent=s.won?'🎉 You Win!':'💥 Game Over!';else st.textContent='Playing...';}
+  }
+  function minesReveal(r,c) {
+    const s=minesState;if(!s||s.over)return;const cell=s.grid[r][c];if(cell.rev||cell.flag)return;cell.rev=true;
+    if(cell.mine){s.over=true;s.won=false;for(let rr=0;rr<s.R;rr++)for(let cc=0;cc<s.C;cc++)if(s.grid[rr][cc].mine)s.grid[rr][cc].rev=true;renderMines();return;}
+    if(cell.cnt===0)for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){const nr=r+dr,nc=c+dc;if(nr>=0&&nr<s.R&&nc>=0&&nc<s.C)minesReveal(nr,nc);}
+    let unrev=0;for(let rr=0;rr<s.R;rr++)for(let cc=0;cc<s.C;cc++)if(!s.grid[rr][cc].rev)unrev++;
+    if(unrev===s.M){s.over=true;s.won=true;}
+    renderMines();
+  }
+  function minesFlag(r,c) {
+    const s=minesState;if(!s||s.over)return;const cell=s.grid[r][c];if(cell.rev)return;
+    cell.flag=!cell.flag;s.flags+=cell.flag?1:-1;renderMines();
+  }
+
+  // ---------- TIC-TAC-TOE ----------
+  appInits.tictactoe = (body) => {
+    tttBoard=Array(9).fill('');tttOver=false;
+    body.innerHTML = `<div class="game-center">
+      <div class="ttt-status" id="ttt-status">Your turn (X)</div>
+      <div class="ttt-grid" id="ttt-grid"></div>
+      <button class="game-btn" onclick="RyzOS._initTTT()">New Game</button>
+    </div>`;
+    renderTTT();
+  };
+  function _initTTT() { tttBoard=Array(9).fill('');tttOver=false;$('ttt-status').textContent='Your turn (X)';renderTTT(); }
+  function renderTTT() {
+    const g=$('ttt-grid');if(!g)return;g.innerHTML='';
+    tttBoard.forEach((v,i)=>{const b=document.createElement('button');b.className='ttt-cell';b.textContent=v;b.style.color=v==='X'?'#5ea8ff':'#ff6b6b';b.onclick=()=>tttPlay(i);g.appendChild(b);});
+  }
+  function tttPlay(i) {
+    if(tttOver||tttBoard[i])return;tttBoard[i]='X';
+    if(tttWin('X')){tttEnd('You win! 🎉');return;}if(tttBoard.every(c=>c)){tttEnd("Draw!");return;}
+    const empty=tttBoard.map((v,i)=>v===''?i:-1).filter(i=>i>=0);let ai=-1;
+    for(const e of empty){tttBoard[e]='O';if(tttWin('O'))ai=e;tttBoard[e]='';if(ai>=0)break;}
+    if(ai<0)for(const e of empty){tttBoard[e]='X';if(tttWin('X'))ai=e;tttBoard[e]='';if(ai>=0)break;}
+    if(ai<0&&tttBoard[4]==='')ai=4;
+    if(ai<0)ai=empty[Math.random()*empty.length|0];
+    tttBoard[ai]='O';
+    if(tttWin('O')){tttEnd('Computer wins! 💻');return;}if(tttBoard.every(c=>c)){tttEnd("Draw!");return;}
+    renderTTT();$('ttt-status').textContent='Your turn (X)';
+  }
+  function tttWin(p){return[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]].some(([a,b,c])=>tttBoard[a]===p&&tttBoard[b]===p&&tttBoard[c]===p);}
+  function tttEnd(msg){tttOver=true;renderTTT();$('ttt-status').textContent=msg;}
+
+  // ---------- 2048 ----------
+  appInits.game2048 = (body) => {
+    body.innerHTML = `<div class="game-center" tabindex="0" id="g2048-wrap">
+      <div class="g2048-score" id="g2048-score">Score: 0</div>
+      <div class="g2048-grid" id="g2048-grid"></div>
+      <button class="game-btn" onclick="RyzOS._start2048()">New Game</button>
+      <div class="g2048-hint">Arrow keys to play</div>
+    </div>`;
+    _start2048();
+    const wrap=$('g2048-wrap');
+    wrap.addEventListener('keydown', handle2048);
+    wrap.focus();
+  };
+  function _start2048(){g2048={grid:Array.from({length:4},()=>Array(4).fill(0)),score:0};add2048Tile();add2048Tile();render2048();}
+  function add2048Tile(){const e=[];for(let r=0;r<4;r++)for(let c=0;c<4;c++)if(g2048.grid[r][c]===0)e.push([r,c]);if(!e.length)return;const[r,c]=e[Math.random()*e.length|0];g2048.grid[r][c]=Math.random()<.9?2:4;}
+  function render2048(){
+    if(!g2048)return;const el=$('g2048-grid');if(!el)return;el.innerHTML='';
+    const colors={0:'rgba(255,255,255,.04)',2:'#3d3d5c',4:'#4a4a6a',8:'#e2885a',16:'#e87040',32:'#ea5a3a',64:'#ea3a1a',128:'#edcf72',256:'#edcc61',512:'#edc850',1024:'#edc53f',2048:'#edc22e'};
+    for(let r=0;r<4;r++)for(let c=0;c<4;c++){const v=g2048.grid[r][c];const d=document.createElement('div');d.className='g2048-cell';d.style.background=colors[v]||'#3c3a32';d.style.color=v<=4?'rgba(255,255,255,.5)':'#fff';d.textContent=v||'';el.appendChild(d);}
+    $('g2048-score').textContent=`Score: ${g2048.score}`;
+  }
+  function handle2048(e){
+    if(!g2048)return;let moved=false;
+    switch(e.key){case 'ArrowUp':moved=move2048('up');break;case 'ArrowDown':moved=move2048('down');break;case 'ArrowLeft':moved=move2048('left');break;case 'ArrowRight':moved=move2048('right');break;default:return;}
+    e.preventDefault();
+    if(moved){add2048Tile();render2048();if(is2048Over())$('g2048-score').textContent=`Game Over! Score: ${g2048.score}`;}
+  }
+  function move2048(dir){
+    const gr=g2048.grid;let moved=false;
+    function slide(a){let f=a.filter(v=>v);for(let i=0;i<f.length-1;i++)if(f[i]===f[i+1]){f[i]*=2;g2048.score+=f[i];f.splice(i+1,1);}while(f.length<4)f.push(0);return f;}
+    if(dir==='left')for(let r=0;r<4;r++){const row=slide(gr[r]);if(row.join()!==gr[r].join())moved=true;gr[r]=row;}
+    else if(dir==='right')for(let r=0;r<4;r++){const row=slide([...gr[r]].reverse()).reverse();if(row.join()!==gr[r].join())moved=true;gr[r]=row;}
+    else if(dir==='up')for(let c=0;c<4;c++){let col=[gr[0][c],gr[1][c],gr[2][c],gr[3][c]];const nc=slide(col);if(nc.join()!==col.join())moved=true;for(let r=0;r<4;r++)gr[r][c]=nc[r];}
+    else if(dir==='down')for(let c=0;c<4;c++){let col=[gr[0][c],gr[1][c],gr[2][c],gr[3][c]].reverse();const nc=slide(col).reverse();const orig=[gr[0][c],gr[1][c],gr[2][c],gr[3][c]];if(nc.join()!==orig.join())moved=true;for(let r=0;r<4;r++)gr[r][c]=nc[r];}
+    return moved;
+  }
+  function is2048Over(){const g=g2048.grid;for(let r=0;r<4;r++)for(let c=0;c<4;c++){if(g[r][c]===0)return false;if(c<3&&g[r][c]===g[r][c+1])return false;if(r<3&&g[r][c]===g[r+1][c])return false;}return true;}
+
+  // ---------- FILE EXPLORER ----------
+  appInits.explorer = (body) => {
+    explorerPath = '~';
+    renderExplorer(body);
+  };
+  function renderExplorer(body) {
+    if (!body) body = $('body-explorer');
+    if (!body) return;
+    const node = getNode(explorerPath);
+    const items = [];
+    if (explorerPath !== '~') items.push({ icon:'📁', name:'..', type:'up' });
+    if (node && node.t === 'd') {
+      Object.keys(node.c).sort((a,b) => {
+        if (node.c[a].t !== node.c[b].t) return node.c[a].t === 'd' ? -1 : 1;
+        return a.localeCompare(b);
+      }).forEach(name => {
+        const child = node.c[name];
+        items.push({
+          icon: child.t === 'd' ? '📁' : '📄',
+          name,
+          type: child.t === 'd' ? 'folder' : 'file',
+          size: child.t === 'f' ? (child.data||'').length + ' B' : '',
+        });
+      });
+    }
+    const count = items.filter(i=>i.type!=='up').length;
+    body.innerHTML = `<div class="explorer">
+      <div class="explorer-toolbar">
+        <button onclick="RyzOS._explorerUp()">⬆️</button>
+        <button onclick="RyzOS._explorerRefresh()">🔄</button>
+        <input class="explorer-path" value="${esc(explorerPath)}" readonly>
+      </div>
+      <div class="explorer-list" id="explorer-list"></div>
+      <div class="explorer-status">${count} item${count!==1?'s':''}</div>
+    </div>`;
+    const list = $('explorer-list');
+    items.forEach(it => {
+      const d = document.createElement('div');
+      d.className = 'explorer-item';
+      d.innerHTML = `<span class="ei-icon">${it.icon}</span><span class="ei-name">${esc(it.name)}</span><span class="ei-size">${it.size||''}</span>`;
+      d.ondblclick = () => {
+        if (it.type === 'up') { _explorerUp(); }
+        else if (it.type === 'folder') {
+          explorerPath = explorerPath === '~' ? '~/'+it.name : explorerPath+'/'+it.name;
+          renderExplorer();
+        }
+      };
+      list.appendChild(d);
+    });
+  }
+  function _explorerUp() {
+    if (explorerPath === '~') return;
+    const parts = explorerPath.split('/'); parts.pop();
+    explorerPath = parts.join('/') || '~';
+    renderExplorer();
+  }
+  function _explorerRefresh() { renderExplorer(); }
+
+  // ---------- WEATHER ----------
+  appInits.weather = (body) => {
+    const conds = [
+      {icon:'☀️',temp:72,desc:'Sunny',hum:35,wind:8},
+      {icon:'⛅',temp:65,desc:'Partly Cloudy',hum:55,wind:12},
+      {icon:'🌧️',temp:58,desc:'Rainy',hum:80,wind:18},
+      {icon:'❄️',temp:28,desc:'Snowy',hum:70,wind:15},
+      {icon:'🌤️',temp:78,desc:'Clear Skies',hum:30,wind:5},
+    ];
+    const w = conds[Math.random()*conds.length|0];
+    body.innerHTML = `<div class="weather-app">
+      <div class="weather-icon">${w.icon}</div>
+      <div class="weather-temp">${w.temp}°F</div>
+      <div class="weather-desc">${w.desc}</div>
+      <div class="weather-loc">RyzCity, RC</div>
+      <div class="weather-details">
+        <div class="wd-item"><div class="wd-label">Humidity</div><div class="wd-value">${w.hum}%</div></div>
+        <div class="wd-item"><div class="wd-label">Wind</div><div class="wd-value">${w.wind} mph</div></div>
+        <div class="wd-item"><div class="wd-label">Feels Like</div><div class="wd-value">${w.temp-2}°F</div></div>
+      </div>
+    </div>`;
+  };
+
+  // ---------- MUSIC ----------
+  appInits.music = (body) => {
+    const t=tracks[musicIdx];
+    body.innerHTML = `<div class="music-app">
+      <div class="music-art" style="background:${t.grad}">🎵</div>
+      <div class="music-title">${esc(t.title)}</div>
+      <div class="music-artist">${esc(t.artist)}</div>
+      <div class="music-controls">
+        <button onclick="RyzOS._musicPrev()">⏮</button>
+        <button class="play-btn" id="music-play" onclick="RyzOS._musicToggle()">${musicPlaying?'⏸':'▶'}</button>
+        <button onclick="RyzOS._musicNext()">⏭</button>
+      </div>
+      <div class="music-progress"><input type="range" min="0" max="100" value="0"></div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:4px">${t.dur}</div>
+    </div>`;
+  };
+  function _musicToggle(){musicPlaying=!musicPlaying;const b=$('music-play');if(b)b.textContent=musicPlaying?'⏸':'▶';}
+  function _musicNext(){musicIdx=(musicIdx+1)%tracks.length;appInits.music($('body-music'));}
+  function _musicPrev(){musicIdx=(musicIdx-1+tracks.length)%tracks.length;appInits.music($('body-music'));}
+
+  // ---------- SETTINGS ----------
+  appInits.settings = (body) => {
+    const isDark = !document.body.classList.contains('light-mode');
+    body.innerHTML = `<div class="settings-app">
+      <h3>⚙️ Settings</h3>
+      <div class="setting-row">
+        <div class="setting-info"><div class="setting-label">Dark Mode</div><div class="setting-desc">Toggle light/dark theme</div></div>
+        <button class="toggle ${isDark?'on':''}" id="toggle-dark" onclick="RyzOS._toggleDark()"></button>
+      </div>
+      <div class="setting-row">
+        <div class="setting-info"><div class="setting-label">Wallpaper</div><div class="setting-desc">Cycle desktop background</div></div>
+        <button class="game-btn" style="padding:6px 14px;font-size:12px" onclick="RyzOS.changeWP()">Change</button>
+      </div>
+      <div class="setting-row">
+        <div class="setting-info"><div class="setting-label">Username</div><div class="setting-desc">${esc(user||'')}</div></div>
+      </div>
+      <div class="setting-row">
+        <div class="setting-info"><div class="setting-label">Chat Server</div><div class="setting-desc">${wsAuthed?'Connected ✅':'Disconnected ❌'}</div></div>
+      </div>
+      <div class="setting-row">
+        <div class="setting-info"><div class="setting-label">Version</div><div class="setting-desc">RyzOS 1.0.0</div></div>
+      </div>
+    </div>`;
+  };
+  function _toggleDark() {
+    document.body.classList.toggle('light-mode');
+    const btn = $('toggle-dark');
+    if (btn) btn.classList.toggle('on');
+  }
+
+  // ---------- ABOUT ----------
+  appInits.about = (body) => {
+    body.innerHTML = `<div class="about-app">
+      <div class="about-logo">💠</div>
+      <h2>RyzOS</h2>
+      <div class="about-ver">Version 1.0.0</div>
+      <p>A web-based desktop experience with apps, games, and multi-user chat. Built with HTML, CSS, and JavaScript.</p>
+      <div style="margin-top:20px;font-size:12px;color:var(--text-muted)">© 2026 RyzOS Project</div>
+    </div>`;
+  };
+
+  // ---------- PUBLIC API ----------
+  return {
+    createUser, login, logout,
+    toggleStart, filterStart, openApp, closeApp,
+    showCtx, closeCtx, changeWP,
+    sendChat, switchChannel,
+    _notesSave, _notesClear,
+    _calcClear, _calcIn, _calcOp, _calcEq,
+    _setPaintTool, _setPaintColor, _setPaintSize, _paintClear, _paintSave,
+    _startSnake, _startMines, _initTTT, _start2048,
+    _explorerUp, _explorerRefresh,
+    _musicToggle, _musicNext, _musicPrev,
+    _toggleDark,
+  };
+})();
+</script>
+</body>
+</html>
