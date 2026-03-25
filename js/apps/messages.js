@@ -18,7 +18,7 @@
             <div class="chat-ch" data-ch="random" onclick="RyzOS.switchChannel('random')"><span class="ch-hash">#</span> random</div>
             <div class="chat-ch" data-ch="games" onclick="RyzOS.switchChannel('games')"><span class="ch-hash">#</span> games</div>
           </div>
-          <h4>Online</h4>
+          <h4>Users</h4>
           <div class="chat-user-list" id="chat-user-list"></div>
         </div>
         <div class="chat-main">

@@ -32,6 +32,7 @@
   <link rel="stylesheet" href="/css/apps/music.css">
   <link rel="stylesheet" href="/css/apps/settings.css">
   <link rel="stylesheet" href="/css/apps/about.css">
+  <link rel="stylesheet" href="/css/apps/admin.css">
 </head>
 <body>
 
@@ -40,12 +41,20 @@
   <div class="login-logo">💠</div>
   <div class="login-title">RyzOS</div>
   <div id="login-box">
-    <input id="login-user" type="text" placeholder="Username" autofocus>
-    <input id="login-pass" type="password" placeholder="Password">
-    <div class="login-btns">
-      <button class="btn-create" onclick="RyzOS.createUser()">Create Account</button>
-      <button class="btn-login" onclick="RyzOS.login()">Sign In</button>
-    </div>
+    <!--
+      Two-phase login: Phase 1 shows only username. Phase 2 adds password
+      (or set-password form) dynamically so Chrome can't autofill prematurely.
+    -->
+    <form id="login-form" action="/api/login" method="POST" onsubmit="return RyzOS._loginFormSubmit(event)">
+      <div class="login-subtitle" id="login-subtitle">Sign In</div>
+      <input id="login-user" name="username" type="text" autocomplete="username" placeholder="Username" autofocus>
+      <!-- password field injected dynamically in phase 2 -->
+      <button type="submit" class="btn-login btn-full" id="login-submit-btn">Next</button>
+      <div id="login-links" class="login-links">
+        <a href="#" id="login-hint-link" onclick="RyzOS.loginShowHint();return false">Forgot password?</a>
+      </div>
+      <div id="login-hint-box" class="login-hint"></div>
+    </form>
     <div id="login-error"></div>
   </div>
 </div>
@@ -108,6 +117,7 @@
 <script src="/js/apps/music.js"></script>
 <script src="/js/apps/settings.js"></script>
 <script src="/js/apps/about.js"></script>
+<script src="/js/apps/admin.js"></script>
 
 </body>
 </html>

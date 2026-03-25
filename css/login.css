@@ -4,26 +4,82 @@
   background:linear-gradient(135deg,#0a1628,#1a3a6b 40%,#2d7dd2);
   display:flex;align-items:center;justify-content:center;flex-direction:column;color:#fff;
 }
-.login-logo{font-size:64px;margin-bottom:8px;user-select:none;}
+.login-logo{font-size:64px;margin-bottom:8px;user-select:none;animation:login-pulse 3s ease-in-out infinite;}
 .login-title{font-size:28px;font-weight:300;letter-spacing:4px;margin-bottom:32px;text-transform:uppercase;}
 #login-box{
   background:rgba(255,255,255,0.12);backdrop-filter:blur(20px);
   border:1px solid rgba(255,255,255,0.18);border-radius:20px;
   padding:36px 40px;min-width:340px;text-align:center;
+  position:relative;
 }
-#login-box input{
+#login-box input[type="text"],
+#login-box input[type="password"]{
   display:block;width:100%;padding:10px 14px;margin-bottom:12px;
   border-radius:10px;border:1px solid rgba(255,255,255,0.3);
   background:rgba(255,255,255,0.1);color:#fff;font-size:14px;outline:none;
+  box-sizing:border-box;transition:all 0.2s;
 }
 #login-box input::placeholder{color:rgba(255,255,255,0.5);}
 #login-box input:focus{border-color:#5ea8ff;background:rgba(255,255,255,0.18);}
-.login-btns{display:flex;gap:10px;margin-top:6px;}
-.login-btns button{
-  flex:1;padding:10px;border-radius:10px;border:none;font-size:14px;font-weight:600;
+
+/* Locked/readonly username field */
+#login-box input.locked{
+  background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.15);
+  color:rgba(255,255,255,0.7);cursor:default;
 }
-.btn-create{background:rgba(255,255,255,0.15);color:#fff;}
-.btn-create:hover{background:rgba(255,255,255,0.25);}
-.btn-login{background:#2d7dd2;color:#fff;}
+
+/* --- Login form --- */
+#login-form{margin:0;padding:0;}
+
+/* Hint link: hidden until server says hint exists */
+#login-links{margin-top:14px;display:flex;justify-content:center;gap:16px;}
+#login-hint-link{display:none;}
+
+/* Hint box */
+#login-hint-box{
+  display:none;margin-top:12px;padding:10px 14px;border-radius:10px;
+  background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);
+  font-size:13px;color:rgba(255,255,255,0.7);line-height:1.5;
+  animation:login-fadeIn 0.3s ease;
+}
+#login-hint-box.visible{display:block;}
+#login-hint-box::before{content:'💡 Hint: ';font-weight:600;color:rgba(255,255,255,0.9);}
+
+/* --- Set-password form (dynamically injected) --- */
+.login-setpass-form{margin:0;padding:0;animation:login-fadeIn 0.35s ease;}
+
+.login-subtitle{
+  font-size:16px;font-weight:500;margin-bottom:16px;
+  color:rgba(255,255,255,0.9);letter-spacing:0.5px;
+}
+.login-info{
+  font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:14px;line-height:1.5;
+}
+
+/* Buttons */
+.btn-login{
+  background:#2d7dd2;color:#fff;border:none;border-radius:10px;
+  font-size:14px;font-weight:600;cursor:pointer;transition:background 0.2s;
+}
 .btn-login:hover{background:#3a8fe0;}
+.btn-full{width:100%;padding:11px;margin-top:4px;}
+
+/* Links (shared) */
+.login-links{display:flex;justify-content:center;gap:16px;margin-top:14px;}
+.login-links a{
+  color:rgba(255,255,255,0.6);font-size:13px;text-decoration:none;
+  transition:color 0.2s;
+}
+.login-links a:hover{color:#fff;}
+
+/* Error */
 #login-error{margin-top:12px;color:#ff7b7b;font-size:13px;min-height:18px;}
+
+/* Phase 2 password field reveal */
+.login-phase2-reveal{
+  animation:login-fadeIn 0.3s ease;
+}
+
+/* Animations */
+@keyframes login-fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes login-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}

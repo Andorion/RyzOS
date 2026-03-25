@@ -5,7 +5,7 @@
   const { state, $ } = RyzOS._internal;
 
   document.addEventListener('keydown', e => {
-    if ($('login-screen').style.display !== 'none' && e.key === 'Enter') RyzOS.login();
+    // Login Enter is handled by <form onsubmit> — no need to handle here
     if (e.key === 'Escape' && state.startOpen) RyzOS.closeStart();
   });
 

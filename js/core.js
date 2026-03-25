@@ -28,6 +28,7 @@ const RyzOS = (() => {
   const state = {
     user: null,
     pass: null,
+    role: null,           // 'user', 'admin', or 'superuser'
     ws: null,
     wsAuthed: false,
     zIdx: 100,
@@ -48,6 +49,7 @@ const RyzOS = (() => {
     chatChannel: 'general',
     chatMessages: {},
     onlineUsers: [],
+    allUsers: [],
     chatUnread: {},
     joinedChannels: new Set(['general','random','games']),
   };

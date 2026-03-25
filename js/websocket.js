@@ -4,6 +4,22 @@
 (function() {
   const { state, $, esc } = RyzOS._internal;
 
+  // Fetch all system users (online + offline) from server
+  async function fetchAllUsers() {
+    try {
+      const r = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: state.user, password: state.pass }),
+      });
+      const d = await r.json();
+      if (d.ok) {
+        state.allUsers = d.users || [];
+        chatUI_updateUsers();
+      }
+    } catch {}
+  }
+
   function connectWS() {
     const loc = location;
     state.ws = new WebSocket((loc.protocol === 'https:' ? 'wss://' : 'ws://') + loc.host);
@@ -16,8 +32,8 @@
     };
     state.ws.onmessage = ev => {
       let m; try { m = JSON.parse(ev.data); } catch { return; }
-      if (m.type === 'auth-ok')      { state.wsAuthed = true; chatUI_updateStatus(); return; }
-      if (m.type === 'online-users') { state.onlineUsers = m.users || []; chatUI_updateUsers(); return; }
+      if (m.type === 'auth-ok')      { state.wsAuthed = true; fetchAllUsers(); chatUI_updateStatus(); return; }
+      if (m.type === 'online-users') { state.onlineUsers = m.users || []; fetchAllUsers(); return; }
       if (m.type === 'user-joined')  { pushChatMsg('general', { sys:true, text: m.username + ' joined' }); chatUI_render(); return; }
       if (m.type === 'user-left')    { pushChatMsg('general', { sys:true, text: m.username + ' left' }); chatUI_render(); return; }
       if (m.type === 'history')      {
@@ -96,7 +112,7 @@
     document.querySelectorAll('.chat-dm').forEach(el => {
       let old = el.querySelector('.notif-badge');
       if (old) old.remove();
-      const uname = el.textContent.trim();
+      const uname = el.dataset.user || el.textContent.trim();
       const ch = 'dm:' + uname;
       if (state.chatUnread[ch] && state.chatUnread[ch] > 0) {
         const badge = document.createElement('span');
@@ -224,12 +240,24 @@
   function chatUI_updateUsers() {
     const list = $('chat-user-list'); if (!list) return;
     list.innerHTML = '';
-    state.onlineUsers.forEach(u => {
-      if (u === state.user) return;
+    const allUsers = state.allUsers || [];
+    const onlineSet = new Set(state.onlineUsers || []);
+    // Sort: online first, then alphabetical
+    const sorted = allUsers
+      .filter(u => u.username !== state.user)
+      .sort((a, b) => {
+        const aOn = onlineSet.has(a.username) ? 0 : 1;
+        const bOn = onlineSet.has(b.username) ? 0 : 1;
+        if (aOn !== bOn) return aOn - bOn;
+        return a.username.localeCompare(b.username);
+      });
+    sorted.forEach(u => {
+      const isOnline = onlineSet.has(u.username);
       const d = document.createElement('div');
-      d.className = 'chat-dm' + (state.chatChannel === 'dm:'+u ? ' active' : '');
-      d.innerHTML = `<span class="dm-dot online"></span>${esc(u)}`;
-      d.onclick = () => switchChannel('dm:'+u);
+      d.className = 'chat-dm' + (state.chatChannel === 'dm:'+u.username ? ' active' : '');
+      d.dataset.user = u.username;
+      d.innerHTML = `<span class="dm-dot${isOnline ? ' online' : ''}"></span>${esc(u.username)}`;
+      d.onclick = () => switchChannel('dm:'+u.username);
       list.appendChild(d);
     });
   }
@@ -239,7 +267,7 @@
       el.classList.toggle('active', el.dataset.ch === state.chatChannel);
     });
     document.querySelectorAll('.chat-dm').forEach(el => {
-      const u = el.textContent.trim();
+      const u = el.dataset.user || el.textContent.trim();
       el.classList.toggle('active', state.chatChannel === 'dm:'+u);
     });
     const hdr = $('chat-ch-header');
@@ -282,6 +310,7 @@
     });
     log.scrollTop = log.scrollHeight;
     chatUI_updateSidebar();
+    chatUI_updateUsers();
     chatUI_updateStatus();
   }
 

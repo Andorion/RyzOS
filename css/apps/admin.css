@@ -1,0 +1,98 @@
+/* ===== ADMIN APP ===== */
+.admin-app{padding:0;height:100%;display:flex;flex-direction:column;overflow:hidden;}
+.admin-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;}
+.admin-tab{
+  flex:1;padding:10px 0;background:transparent;border:none;
+  color:var(--text-secondary);font-size:13px;font-weight:600;cursor:pointer;
+  border-bottom:2px solid transparent;transition:all 0.2s;
+}
+.admin-tab:hover{color:var(--text-primary);background:rgba(255,255,255,0.03);}
+.admin-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+.admin-panel{padding:20px;overflow-y:auto;flex:1;}
+.admin-panel h3{font-size:15px;margin:0;color:var(--text-primary);}
+
+.admin-field{margin-bottom:10px;}
+.admin-field label{display:block;font-size:12px;color:var(--text-secondary);margin-bottom:4px;}
+.admin-field input{
+  width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);
+  background:var(--bg-secondary);color:var(--text-primary);font-size:13px;outline:none;
+  box-sizing:border-box;
+}
+.admin-field input:focus{border-color:var(--accent);}
+
+.admin-btn{
+  padding:8px 20px;border-radius:8px;border:none;
+  background:var(--accent);color:#fff;font-size:13px;font-weight:600;
+  cursor:pointer;transition:background 0.2s;
+}
+.admin-btn:hover{background:#3a8fe0;}
+.admin-btn-sm{padding:5px 12px;font-size:12px;}
+.admin-btn-ghost{
+  padding:5px 12px;border-radius:8px;border:none;
+  background:transparent;color:var(--text-secondary);font-size:12px;
+  cursor:pointer;transition:color 0.2s;
+}
+.admin-btn-ghost:hover{color:var(--text-primary);}
+
+.admin-msg{font-size:13px;margin-top:10px;min-height:18px;}
+.admin-msg.ok{color:#2ed573;}
+.admin-msg.err{color:#ff7b7b;}
+
+.admin-info{
+  margin-top:20px;padding-top:16px;border-top:1px solid var(--border);
+  font-size:13px;color:var(--text-secondary);display:flex;align-items:center;gap:8px;
+}
+
+/* Toolbar with title + button */
+.admin-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+
+/* Inline create user row */
+.admin-create-row{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  margin-bottom:14px;padding:10px 12px;border-radius:10px;
+  background:rgba(255,255,255,0.03);border:1px solid var(--border);
+  animation:admin-fadeIn 0.2s ease;
+}
+.admin-create-row .admin-msg{margin:0;width:100%;font-size:12px;}
+.admin-inline-input{
+  flex:1;min-width:120px;padding:6px 10px;border-radius:8px;border:1px solid var(--border);
+  background:var(--bg-secondary);color:var(--text-primary);font-size:13px;outline:none;
+}
+.admin-inline-input:focus{border-color:var(--accent);}
+
+/* Role badges */
+.admin-role-badge{
+  display:inline-block;padding:2px 8px;border-radius:6px;
+  font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;
+}
+.admin-role-user{background:rgba(255,255,255,0.08);color:var(--text-secondary);}
+.admin-role-admin{background:rgba(45,125,210,0.2);color:#5ea8ff;}
+.admin-role-superuser{background:rgba(255,165,0,0.2);color:#ffa500;}
+
+/* User list */
+.admin-user-list{margin-top:8px;}
+.admin-user-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 10px;border-radius:8px;margin-bottom:4px;
+  background:rgba(255,255,255,0.03);
+}
+.admin-user-row:hover{background:rgba(255,255,255,0.06);}
+.admin-user-info{display:flex;align-items:center;gap:8px;font-size:13px;}
+.admin-pw-status{font-size:12px;color:var(--text-muted);}
+.admin-pw-pending{font-size:11px;color:#ffa500;font-style:italic;}
+.admin-user-actions{display:flex;gap:4px;}
+.admin-sm-btn{
+  padding:3px 6px;border-radius:6px;border:none;background:rgba(255,255,255,0.08);
+  cursor:pointer;font-size:13px;transition:background 0.2s;
+}
+.admin-sm-btn:hover{background:rgba(255,255,255,0.15);}
+.admin-sm-btn.danger:hover{background:rgba(255,50,50,0.25);}
+
+/* Inline rename */
+.admin-rename-inline{
+  display:flex;align-items:center;gap:8px;width:100%;
+  animation:admin-fadeIn 0.2s ease;
+}
+
+@keyframes admin-fadeIn{from{opacity:0}to{opacity:1}}
